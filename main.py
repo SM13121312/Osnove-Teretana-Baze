@@ -10,14 +10,10 @@ from tabulate import tabulate
 import mysql.connector
 import re
 import os
+import sqlite3
 
-connection = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="1234",
-    database="projekatjedan"
-)
 
+connection = sqlite3.connect('projekatdva.db')
 cursor = connection.cursor()
 
 def meniprvi():
@@ -114,14 +110,14 @@ def valpassword():
 
 def log_in():
     username = input('ENTER YOUR USERNAME: ')
-    cursor.execute('SELECT COUNT(korisnicko_ime) FROM korisnici WHERE korisnicko_ime = %s', (username,))
+    cursor.execute('SELECT COUNT(korisnicko_ime) FROM korisnici WHERE korisnicko_ime = ?', (username,))
     brojac = cursor.fetchone()
     if brojac[0] > 0:
         password = input('ENTER YOUR PASSWORD: ')
-        cursor.execute('SELECT lozinka FROM korisnici WHERE korisnicko_ime = %s', (username,))
+        cursor.execute('SELECT lozinka FROM korisnici WHERE korisnicko_ime = ?', (username,))
         sifra = cursor.fetchone()
         if password == sifra[0]:
-            cursor.execute('SELECT uloga, status, paket, ime, prezime, datum_aktivacije, datum_isteka FROM korisnici WHERE korisnicko_ime = %s', (username,))
+            cursor.execute('SELECT uloga, status, paket, ime, prezime, datum_aktivacije, datum_isteka FROM korisnici WHERE korisnicko_ime = ?', (username,))
             role, status, package, name, surname, act_date, exp_date = cursor.fetchone()
             shared.current_user = [{'username': username, 'role': role, 'status' : status, 'package' : package, 'name' : name, 'surname' : surname, 'act_date' : act_date, 'exp_date' : exp_date}]
 
@@ -150,6 +146,9 @@ def log_out():
 
 
 def meni_admin():
+    cursor.execute('SELECT * FROM korisnici')
+    data = cursor.fetchall()
+    print(data)
     while True:
         print('\nCurrently you are here as admin.')
         print('If you want to see program overview enter 1.\n'
@@ -307,4 +306,11 @@ def kruziraj_kao_gest():
 
 
 if __name__ == '__main__':
+    with open('Tabele.sql', 'r', encoding = 'utf-8') as file:
+        sql_fajl = file.read()
+
+    milan = sql_fajl.split(';')
+    for i in range(0, len(milan)):
+        cursor.execute(milan[i])
+
     meniprvi()
