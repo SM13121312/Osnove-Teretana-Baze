@@ -146,9 +146,6 @@ def log_out():
 
 
 def meni_admin():
-    cursor.execute('SELECT * FROM korisnici')
-    data = cursor.fetchall()
-    print(data)
     while True:
         print('\nCurrently you are here as admin.')
         print('If you want to see program overview enter 1.\n'
@@ -159,7 +156,6 @@ def meni_admin():
               'If you want to register instructor or admin enter 6.\n'
               'If you want to log out enter "xxx".\n'
               'If you want to exit app enter "x".\n')
-        os.system('cls')
         odabir = input('Your choice is: ')
         if odabir == '1':
             pregled_programa(cursor)

@@ -28,7 +28,7 @@ def pretraga_programa(cursor):
         if odabir == '1':
             while True:
                 name = input('Enter name of program(or "x" to get back): ')
-                cursor.execute('SELECT * FROM programi_treninga WHERE naziv_programa = %s', (name,))
+                cursor.execute('SELECT * FROM programi_treninga WHERE naziv_programa = ?', (name,))
                 data = cursor.fetchall()
                 if data:
                     prikaz_programa(data, cursor)
@@ -41,7 +41,7 @@ def pretraga_programa(cursor):
         elif odabir == '2':
             while True:
                 kind = input('Enter kind of program(or "x" to get back): ')
-                cursor.execute('SELECT * FROM programi_treninga WHERE vrsta_programa = %s', (kind,))
+                cursor.execute('SELECT * FROM programi_treninga WHERE vrsta_programa = ?', (kind,))
                 data = cursor.fetchall()
                 if data:
                     prikaz_programa(data, cursor)
@@ -53,7 +53,7 @@ def pretraga_programa(cursor):
         elif odabir == '3':
             while True:
                 min_time = input('Enter min. time of duration(or "x" to get back): ')
-                cursor.execute('SELECT * FROM programi_treninga WHERE trajanje >= %s', (min_time,))
+                cursor.execute('SELECT * FROM programi_treninga WHERE trajanje >= ?', (min_time,))
                 data = cursor.fetchall()
                 if data and min_time.isdigit():
                     prikaz_programa(data, cursor)
@@ -66,7 +66,7 @@ def pretraga_programa(cursor):
         elif odabir == '4':
             while True:
                 max_time = input('Enter max. time of duration(or "x" to get back): ')
-                cursor.execute('SELECT * FROM programi_treninga WHERE trajanje <= %s', (max_time,))
+                cursor.execute('SELECT * FROM programi_treninga WHERE trajanje <= ?', (max_time,))
                 data = cursor.fetchall()
                 if data and max_time.isdigit():
                     prikaz_programa(data, cursor)
@@ -79,7 +79,7 @@ def pretraga_programa(cursor):
             while True:
                 min_time = input('Enter min. time of duration(or "x" to get back): ')
                 max_time = input('Enter max. time of duration(or "x" to get back): ')
-                cursor.execute('SELECT * FROM programi_treninga WHERE trajanje >= %s AND trajanje <= %s',
+                cursor.execute('SELECT * FROM programi_treninga WHERE trajanje >= ? AND trajanje <= ?',
                                (min_time, max_time))
                 data = cursor.fetchall()
                 if data and min_time.isdigit() and max_time.isdigit():
@@ -92,7 +92,7 @@ def pretraga_programa(cursor):
         elif odabir == '6':
             while True:
                 packet = input('Enter package type(standard or premium)(or "x" to get back): ')
-                cursor.execute('SELECT * FROM programi_treninga WHERE paket = %s', (packet.lower(),))
+                cursor.execute('SELECT * FROM programi_treninga WHERE paket = ?', (packet.lower(),))
                 data = cursor.fetchall()
                 if data:
                     prikaz_programa(data, cursor)
@@ -138,7 +138,7 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE programi_treninga.naziv_programa = %s'
+                    query2 = 'WHERE programi_treninga.naziv_programa = ?'
                     prikaz_pretrage_termina2(cursor, query1, query2, word)
 
 
@@ -149,7 +149,7 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE trening.sifra_sale = %s'
+                    query2 = 'WHERE trening.sifra_sale = ?'
                     prikaz_pretrage_termina2(cursor, query1, query2, word)
 
         elif odabir == '3':
@@ -159,7 +159,7 @@ def pretragatermina(cursor):
                 if word == 'x':
                     break
                 else:
-                    query2 = 'WHERE programi_treninga.paket = %s'
+                    query2 = 'WHERE programi_treninga.paket = ?'
                     prikaz_pretrage_termina2(cursor, query1, query2, word)
 
         elif odabir == '4':
@@ -174,7 +174,7 @@ def pretragatermina(cursor):
                 if month.lower() == 'x' or day.lower() == 'x':
                     break
                 elif re.match(date_pattern, word):
-                    query2 = 'WHERE termin.datum = %s'
+                    query2 = 'WHERE termin.datum = ?'
                     prikaz_pretrage_termina2(cursor, query1, query2, word)
                 else:
                     print('Enter valid date.')
@@ -188,7 +188,7 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE trening.vreme_pocetka = %s'
+                    query2 = 'WHERE trening.vreme_pocetka = ?'
                     prikaz_pretrage_termina2(cursor, query1, query2, word)
 
         elif odabir == '6':
@@ -199,7 +199,7 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE trening.vreme_kraja = %s'
+                    query2 = 'WHERE trening.vreme_kraja = ?'
                     prikaz_pretrage_termina2(cursor, query1, query2, word)
 
         elif odabir.lower() == 'x':
@@ -303,16 +303,16 @@ def unos_programa(cursor):
             print('Choose standard or premium, there is no third.')
 
 
-    cursor.execute('INSERT INTO programi_treninga VALUES (%s, %s, %s, %s, %s, %s)', (name, kind, duration, instruktor, opis, paket))
+    cursor.execute('INSERT INTO programi_treninga VALUES (?, ?, ?, ?, ?, ?)', (name, kind, duration, instruktor, opis, paket))
 
 def brisanje_programa(cursor):
     print('DELETE PROGRAM')
     name = input('Enter name of the program you want to delete: ')
-    cursor.execute('DELETE FROM programi_treninga WHERE naziv_programa = %s', (name,))
+    cursor.execute('DELETE FROM programi_treninga WHERE naziv_programa = ?', (name,))
 
 def izmena_programa(cursor):
     naziv_programa = input("Enter the name of the program you want to update: ")
-    cursor.execute('SELECT COUNT(naziv_programa) FROM programi_treninga WHERE naziv_programa = %s', (naziv_programa,))
+    cursor.execute('SELECT COUNT(naziv_programa) FROM programi_treninga WHERE naziv_programa = ?', (naziv_programa,))
     data = cursor.fetchone()
     if data[0] > 0:
         izmena_programa_column(cursor, naziv_programa)
@@ -322,7 +322,7 @@ def izmena_programa(cursor):
 
 def izmena_programa_column(cursor, naziv_programa):
     print('This is program you want to change: ')
-    cursor.execute("SELECT * FROM programi_treninga WHERE naziv_programa = %s", (naziv_programa,))
+    cursor.execute("SELECT * FROM programi_treninga WHERE naziv_programa = ?", (naziv_programa,))
     data = cursor.fetchall()
 
     headers = [desc[0] for desc in cursor.description]
@@ -388,13 +388,13 @@ def izmena_programa_column(cursor, naziv_programa):
         else:
             print('Invalid choice. Try again.')
 
-    cursor.execute('UPDATE programi_treninga SET naziv_programa = %s,  vrsta_programa = %s, trajanje = %s, instruktor = %s, opis = %s, paket = %s WHERE naziv_programa = %s', (naziv, vrsta, trajanje, instruktor, opis, paket, naziv_programa))
+    cursor.execute('UPDATE programi_treninga SET naziv_programa = ?,  vrsta_programa = ?, trajanje = ?, instruktor = ?, opis = ?, paket = ? WHERE naziv_programa = ?', (naziv, vrsta, trajanje, instruktor, opis, paket, naziv_programa))
 
 
 def pregled_treninga(cursor):
     print('Trening OVERVIEW')
     cursor.execute("SELECT * FROM trening")
-    data = cursor.fetchall()  # Fetch all rows
+    data = cursor.fetchall() 
     headers = [desc[0] for desc in cursor.description]
 
     table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
@@ -489,20 +489,20 @@ def unos_treninga(cursor):
         else:
             print('Invalid name')
 
-    cursor.execute('INSERT INTO trening VALUES (%s, %s, %s, %s, %s, %s)', (sifra_treninga, sifra_sale, start_time, end_time, day, name))
+    cursor.execute('INSERT INTO trening VALUES (?, ?, ?, ?, ?, ?)', (sifra_treninga, sifra_sale, start_time, end_time, day, name))
 
 def brisanje_treninga(cursor):
     print('TRAINING OVERVIEW')
     pregled_treninga(cursor)
     print('DELETE TRAINING')
     name = input('Enter training code from training you want to delete: ')
-    cursor.execute('DELETE FROM trening WHERE sifra_treninga = %s', (name,))
+    cursor.execute('DELETE FROM trening WHERE sifra_treninga = ?', (name,))
 
 def izmena_treninga(cursor):
     print('TRAINING CHANGE')
     while True:
         sifra = input('Enter training code: ')
-        cursor.execute('SELECT COUNT(sifra_treninga) FROM trening WHERE sifra_treninga = %s', (sifra,))
+        cursor.execute('SELECT COUNT(sifra_treninga) FROM trening WHERE sifra_treninga = ?', (sifra,))
         data = cursor.fetchone()
         if data[0] > 0:
             izmena_treninga_column(cursor, sifra)
@@ -512,7 +512,7 @@ def izmena_treninga(cursor):
 
 def izmena_treninga_column(cursor, sifra):
     print('This is training you want to change: ')
-    cursor.execute("SELECT * FROM trening WHERE sifra_treninga = %s", (sifra,))
+    cursor.execute("SELECT * FROM trening WHERE sifra_treninga = ?", (sifra,))
     data = cursor.fetchall()
 
     headers = [desc[0] for desc in cursor.description]
@@ -585,6 +585,6 @@ def izmena_treninga_column(cursor, sifra):
         else:
             print('Choose ono of already existing names. Try again.')
 
-    cursor.execute('UPDATE trening SET sifra_treninga = %s, sifra_sale = %s, vreme_pocetka = %s, vreme_kraja = %s, dan = %s, naziv_programa = %s WHERE sifra_treninga = %s', (sifra_treninga, sifra_sale, vreme_pocetka, vreme_kraja, dan, naziv, sifra))
+    cursor.execute('UPDATE trening SET sifra_treninga = ?, sifra_sale = ?, vreme_pocetka = ?, vreme_kraja = ?, dan = ?, naziv_programa = ? WHERE sifra_treninga = ?', (sifra_treninga, sifra_sale, vreme_pocetka, vreme_kraja, dan, naziv, sifra))
 
 

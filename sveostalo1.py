@@ -28,7 +28,7 @@ def visekriterijumska_pretraga_programa(cursor):
             if naziv == '':
                 break
             elif naziv.isalpha():
-                query1 += ' AND naziv_programa = %s'
+                query1 += ' AND naziv_programa = ?'
                 values.append(naziv)
                 break
             else:
@@ -39,7 +39,7 @@ def visekriterijumska_pretraga_programa(cursor):
             if vrsta == '':
                 break
             elif vrsta.isalpha():
-                query1 += ' AND vrsta_programa = %s'
+                query1 += ' AND vrsta_programa = ?'
                 values.append(vrsta)
                 break
             else:
@@ -50,7 +50,7 @@ def visekriterijumska_pretraga_programa(cursor):
             if min_time == '':
                 break
             elif min_time.isdigit():
-                query1 += ' AND trajanje >= %s'
+                query1 += ' AND trajanje >= ?'
                 values.append(min_time)
                 break
             else:
@@ -61,7 +61,7 @@ def visekriterijumska_pretraga_programa(cursor):
             if max_time == '':
                 break
             elif max_time.isdigit():
-                query1 += ' AND trajanje <= %s'
+                query1 += ' AND trajanje <= ?'
                 values.append(max_time)
                 break
             else:
@@ -74,7 +74,7 @@ def visekriterijumska_pretraga_programa(cursor):
                 break
             elif re.match(pattern, time_limit):
                 min_vreme, max_vreme = map(int, time_limit.split(":"))
-                query1 += ' AND trajanje >= %s AND trajanje <= %s'
+                query1 += ' AND trajanje >= ? AND trajanje <= ?'
                 values.extend([min_vreme, max_vreme])
                 break
             else:
@@ -85,7 +85,7 @@ def visekriterijumska_pretraga_programa(cursor):
             if paket == '':
                 break
             elif paket.lower() in ['standard', 'premium']:
-                query1 += ' AND paket = %s'
+                query1 += ' AND paket = ?'
                 values.append(paket)
                 break
             else:
@@ -157,7 +157,7 @@ def reg_instruktora(cursor):
             print('Invalid choice.\n'
                   'Try again.\n')
 
-    cursor.execute('INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES (%s, %s, %s, %s, %s)', (username, password, name, surname, uloga))
+    cursor.execute('INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES (?, ?, ?, ?, ?)', (username, password, name, surname, uloga))
 
 def aktivacija_statusa(cursor):
     while True:
@@ -181,7 +181,7 @@ def aktivacija_statusa(cursor):
 
 
 def aktivacija_premiuma(cursor):
-    print('You are currently activating premium package fro user.')
+    print('You are currently activating premium package for user.')
     cursor.execute('SELECT korisnicko_ime FROM korisnici')
     imenarazna = cursor.fetchall()
     while True:
@@ -190,11 +190,11 @@ def aktivacija_premiuma(cursor):
         if username.lower() == 'x':
             break
         elif any(username == ime[0] for ime in imenarazna):
-            cursor.execute('UPDATE korisnici SET paket = "premium" WHERE korisnicko_ime = %s AND uloga = "standard"', (username,))
+            cursor.execute('UPDATE korisnici SET paket = "premium" WHERE korisnicko_ime = ? AND uloga = "standard"', (username,))
             role_result = cursor.fetchone()
 
             if role_result and role_result[0] == 'standard':
-                cursor.execute('UPDATE korisnici SET paket = "premium" WHERE korisnicko_ime = %s', (username,))
+                cursor.execute('UPDATE korisnici SET paket = "premium" WHERE korisnicko_ime = ?', (username,))
                 print(f"Package successfully changed to 'premium' for user: {username}.")
             else:
                 print(f"Package not changed. The role for user '{username}' is not 'standard'.")
