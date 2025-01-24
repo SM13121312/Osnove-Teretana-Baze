@@ -44,7 +44,7 @@ def meniprvi():
 
 
 def registracija():
-    print('\n\nPLESE ENTER YOUR INFORMATION BELOW.')
+    print('\n\nPLESE ENTER YOUR INFORMATION BELOW')
     username = valusername()
     password = valpassword()
 
