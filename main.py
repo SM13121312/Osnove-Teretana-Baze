@@ -16,6 +16,14 @@ import sqlite3
 connection = sqlite3.connect('projekatdva.db')
 cursor = connection.cursor()
 
+def restart_baze():
+    with open('Tabele.sql', 'r', encoding = 'utf-8') as file:
+        sql_fajl = file.read()
+
+    milan = sql_fajl.split(';')
+    for i in range(0, len(milan)):
+        cursor.execute(milan[i])
+
 def meniprvi():
     print('\n-----FIRST MENU-----\n')
     print('CHOOSE:\n'
@@ -304,11 +312,4 @@ def kruziraj_kao_gest():
 
 
 if __name__ == '__main__':
-    with open('Tabele.sql', 'r', encoding = 'utf-8') as file:
-        sql_fajl = file.read()
-
-    milan = sql_fajl.split(';')
-    for i in range(0, len(milan)):
-        cursor.execute(milan[i])
-
     meniprvi()
