@@ -313,3 +313,4 @@ def kruziraj_kao_gest():
 
 if __name__ == '__main__':
     meniprvi()
+

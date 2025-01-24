@@ -14,6 +14,8 @@ CREATE TABLE korisnici (
   datum_isteka date
 );
 
+INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES ('admin', 'admin123', 'Lanmi', 'Miami', 'admin');
+
 
 DROP TABLE IF EXISTS sale;
 CREATE TABLE sale (
