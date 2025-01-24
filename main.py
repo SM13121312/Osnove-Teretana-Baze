@@ -52,7 +52,7 @@ def meniprvi():
 
 
 def registracija():
-    print('\n\nPLESE ENTER YOUR INFORMATION BELOW')
+    print('\n\nPLEASE ENTER YOUR INFORMATION BELOW')
     username = valusername()
     password = valpassword()
 
@@ -73,14 +73,20 @@ def registracija():
             break
         else:
             print('Enter your real surname.')
+
     role = 'korisnik'
     status = 'aktivan'
     packet = 'standard'
-    
-    datetoday = date.today()
-    exp_date = datetoday + timedelta(days=30)
-    cursor.execute('INSERT INTO korisnici VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (username, password, name, surname, role, status, packet, datetoday, datetoday, exp_date))
+
+    datetoday = date.today().isoformat()
+    exp_date = (date.today() + timedelta(days=30)).isoformat()
+
+    cursor.execute(
+        'INSERT INTO korisnici VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        (username, password, name, surname, role, status, packet, datetoday, datetoday, exp_date)
+    )
     connection.commit()
+
 
 
 def valusername():
