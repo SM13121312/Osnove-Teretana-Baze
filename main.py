@@ -61,27 +61,29 @@ def registracija():
         surname = input('Enter your surname: ')
         if surname.strip() == '':
             print('Enter your real surname.')
-        elif name.isalpha():
+        elif surname.isalpha():
             break
         else:
             print('Enter your real surname.')
     role = 'korisnik'
     status = 'aktivan'
     packet = 'standard'
+    
     datetoday = date.today()
     exp_date = datetoday + timedelta(days=30)
-    cursor.execute('INSERT INTO korisnici VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)', (username, password, name, surname, role, status, packet, datetoday, datetoday, exp_date))
+    cursor.execute('INSERT INTO korisnici VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (username, password, name, surname, role, status, packet, datetoday, datetoday, exp_date))
     connection.commit()
 
 
 def valusername():
     cursor.execute('SELECT korisnicko_ime FROM korisnici')
-    imenarazna = cursor.fetchall()
+    imenarazna = [imenica[0] for imenica in cursor.fetchall()]
+    print(imenarazna)
     pattern = r'^[a-zA-Z0-9]+$'
     while True:
         username = input('Enter username, username contains only letters(A-Z) and digits: ')
         username = username.lower()
-        if any(username == ime[0] for ime in imenarazna):
+        if username in imenarazna:
             print('Username already exists.')
         elif not re.match(pattern, username):
             print('Invalid username! Only letters and digits are allowed.')

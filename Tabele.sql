@@ -7,7 +7,7 @@ CREATE TABLE korisnici (
   ime varchar(20),
   prezime varchar(20),
   uloga varchar(20),
-  status varchar(20),
+  status_korisnika varchar(20),
   paket varchar(20),
   datum date, 
   datum_aktivacije date,
