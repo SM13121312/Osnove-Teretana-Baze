@@ -13,7 +13,7 @@ import os
 import sqlite3
 
 
-connection = sqlite3.connect('projekatdva.db')
+connection = sqlite3.connect('BAZAzaprojekat.db')
 cursor = connection.cursor()
 
 def restart_baze():
@@ -92,8 +92,8 @@ def registracija():
 def valusername():
     cursor.execute('SELECT korisnicko_ime FROM korisnici')
     imenarazna = [imenica[0] for imenica in cursor.fetchall()]
-    print(imenarazna)
     pattern = r'^[a-zA-Z0-9]+$'
+    print(imenarazna)
     while True:
         username = input('Enter username, username contains only letters(A-Z) and digits: ')
         username = username.lower()
@@ -133,7 +133,7 @@ def log_in():
         cursor.execute('SELECT lozinka FROM korisnici WHERE korisnicko_ime = ?', (username,))
         sifra = cursor.fetchone()
         if password == sifra[0]:
-            cursor.execute('SELECT uloga, status, paket, ime, prezime, datum_aktivacije, datum_isteka FROM korisnici WHERE korisnicko_ime = ?', (username,))
+            cursor.execute('SELECT uloga, status_korisnika, paket, ime, prezime, datum_aktivacije, datum_isteka FROM korisnici WHERE korisnicko_ime = ?', (username,))
             role, status, package, name, surname, act_date, exp_date = cursor.fetchone()
             shared.current_user = [{'username': username, 'role': role, 'status' : status, 'package' : package, 'name' : name, 'surname' : surname, 'act_date' : act_date, 'exp_date' : exp_date}]
 
@@ -181,8 +181,10 @@ def meni_admin():
             pretragatermina(cursor)
         elif odabir == '4':
             unos_izmena_brisanje_programa(cursor)
+            connection.commit()
         elif odabir == '5':
             unos_izmena_brisanje_treninga(cursor)
+            connection.commit()
         elif odabir == '6':
             reg_instruktora(cursor)
             connection.commit()

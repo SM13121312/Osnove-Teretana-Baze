@@ -419,21 +419,22 @@ def unos_izmena_brisanje_treninga(cursor):
         return
     else:
         print('INVALID CHOICE')
-        unos_izmena_brisanje_programa()
+        unos_izmena_brisanje_programa(cursor)
 
 def unos_treninga(cursor):
     print('ADDING NEW TRAINING')
     print('Training contains: training code, hall code, start time, end time, day, program name.')
 
-    cursor.execute('SLEECT sifra_treninga FROM trening')
-    sifrice = cursor.fetchall()
+    cursor.execute('SELECT sifra_treninga FROM trening')
+    sifrice = [sif[0] for sif in cursor.fetchall()]
+    print(sifrice)
     while True:
         sifra_treninga = input('Enter training code: ')
-        if any(sifra_treninga == sifrica[0] for sifrica in sifrice):
+        if eval(sifra_treninga) in sifrice:
             print('Take another one, this one is already taken.')
         elif sifra_treninga.strip() == '':
             print('Choose something.')
-        elif not any(sifra_treninga == sifrica[0] for sifrica in sifrice) and sifra_treninga.isdigit():
+        elif sifra_treninga.isdigit():
             break
         else:
             print('Try something else.')
@@ -476,7 +477,6 @@ def unos_treninga(cursor):
 
     cursor.execute('SELECT naziv_programa FROM programi_treninga')
     nazivi = cursor.fetchall()
-    print(nazivi)
     print('\nAvailable progrm names: ', end = '')
     for naziv in nazivi:
         print(naziv[0], end=', ')
