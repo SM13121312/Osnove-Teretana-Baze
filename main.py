@@ -1,16 +1,16 @@
 import os
 import sys
 from datetime import date, timedelta
-from pregpretiostalo import pregled_programa, pretraga_programa, pretragatermina, prikaz_pretrage_termina2, unos_izmena_brisanje_programa, pregled_treninga, unos_izmena_brisanje_treninga
-from sveostalo1 import visekriterijumska_pretraga_programa, reg_instruktora, aktivacija_premiuma, aktivacija_statusa
-from rezervacijeiostalo import rezervacija_mesta, pregled_rezervacija_korisnika, brisanje_rezervacija_korisnika, \
-    rezervacija_mesta_instruktori, brisanje_rezervacija_instruktor, pregled_rezervacija_instruktor, pretraga_rez_mesta
 import shared
 from tabulate import tabulate
-import mysql.connector
 import re
-import os
 import sqlite3
+import random
+import string
+
+from pregpretiostalo import *
+from sveostalo1 import *
+from rezervacijeiostalo import *
 
 
 connection = sqlite3.connect('BAZAzaprojekat.db')
@@ -117,6 +117,100 @@ def valpassword():
         else:
             print('Password should contain more than 6 chars.')
 
+def unosenje_termina():
+    datum = date.today()
+    godina = datum.year
+    mesec = datum.month
+
+    # if datum.day != 1:
+    #     print('It is not first day in month.')
+    #     return
+
+    dani_u_nedelji = {
+        'ponedeljak': 0,
+        'utorak': 1,
+        'sreda': 2,
+        'cetvrtak': 3,
+        'petak': 4,
+        'subota': 5,
+        'nedelja': 6
+    }  
+    
+    dani_u_listi = ['ponedeljak', 'utorak', 'sreda', 'cetvrtak', 'petak', 'subota', 'nedelja']
+
+    cursor.execute('SELECT sifra_treninga, dan FROM trening')
+    informacije = cursor.fetchall()
+
+    for sifra_treninga, dan in informacije:
+        dani_vezbanja = dan.lower().split('|') 
+
+        svi_datumi = []
+        
+        for dan in dani_vezbanja:
+            if dan not in dani_u_nedelji:
+                print('Mistake in database.')
+                continue
+
+            dan_vezbanja = dani_u_nedelji[dan]
+            datum_za_loop = date(godina, mesec, 1)
+
+            while datum_za_loop.month == mesec:
+                if datum_za_loop.weekday() == dan_vezbanja:
+                    svi_datumi.append(datum_za_loop)
+                datum_za_loop += timedelta(days=1)
+
+        for datic in svi_datumi:
+            danko_bananko = dani_u_listi[datic.weekday()]
+            datic = datic.strftime("%Y-%m-%d")
+
+            while True:
+                cursor.execute('SELECT sifra_termina FROM termin')
+                sve_sifre_termina = [sif[0] for sif in cursor.fetchall()]
+                random_slova = ''.join(random.choices(string.ascii_uppercase, k=2))
+                sifra_termina = str(sifra_treninga) + random_slova
+
+                if sifra_termina not in sve_sifre_termina:
+                    break
+
+            cursor.execute('INSERT INTO termin VALUES (?, ?, ?, ?)', (sifra_termina, datic, sifra_treninga, danko_bananko)) 
+
+    print('GG you did it!!!')        
+    connection.commit()
+  
+
+def izvestaji():
+    while True:
+        print('1) Lista rezervacija za odabran datum rezervacije.\n'
+              '2) Lista rezervacija za odabran datum termina treninga.\n'
+              '3) Lista rezervacija za odabran datum rezervacije i odabranog instruktora.\n'
+              '4) Ukupan broj rezervacija za izabran dan (u nedelji) održavanja treninga.\n'
+              '5) Ukupan broj rezervacije po instruktorima.\n'
+              '6) Ukupan broj rezervacija realizovanih za premium i za standard paket.\n'
+              '7) Tri najpopularnija programa treninga u poslednjih godinu dana.\n'
+              '8) Najpopularniji dan u nedelji.')
+        odabir = input('Unesite broj vaseg odabira ili "x" za vracanje na meni: ')
+        if odabir == '1':
+            rezervacije_za_datum(cursor)
+        elif odabir == '2':
+            rezervacije_za_datum_termina(cursor)
+        elif odabir == '3':
+            rezervacije_za_datum_i_instruktora(cursor)
+        elif odabir == '4':
+            rezervacije_za_dan(cursor)
+        elif odabir == '5':
+            rezervacije_po_instruktoru(cursor)
+        elif odabir == '6':
+            rezervacije_za_premium_ili_standard(cursor)
+        elif odabir == '7':
+            najpopularniji_program(cursor)
+        elif odabir == '8':
+            najpopularniji_dan(cursor)
+        elif odabir.lower() == 'x':
+            return
+        else:
+            print('\nIzabrali ste ne postojeci broj.\n')
+        
+
 
 #
 #
@@ -170,6 +264,8 @@ def meni_admin():
               'If you want to add new, change or delete old training programs enter 4.\n'
               'If you want to add new, change or delete old trainings enter 5.\n'
               'If you want to register instructor or admin enter 6.\n'
+              'If you want to generate new training sessions enter 7.\n'
+              'izvestaji\n'
               'If you want to log out enter "xxx".\n'
               'If you want to exit app enter "x".\n')
         odabir = input('Your choice is: ')
@@ -188,6 +284,11 @@ def meni_admin():
         elif odabir == '6':
             reg_instruktora(cursor)
             connection.commit()
+        elif odabir == '7':
+            unosenje_termina()
+            connection.commit()
+        elif odabir == '8':
+            izvestaji()
         elif odabir == 'xxx':
             log_out()
         elif odabir.lower() == 'x':
@@ -318,7 +419,10 @@ def kruziraj_kao_gest():
 #
 
 
-
 if __name__ == '__main__':
+    # cursor.execute('DELETE FROM termin')
+    # connection.commit()
+    # unosenje_termina()
+    # connection.commit()
     meniprvi()
 

@@ -359,8 +359,6 @@ def brisanje_rezervacija_instruktor(cursor):
                   'Try again.\n')
 
 def pretraga_rez_mesta(cursor):
-
-
     print('\nYou can search by training code, name or surname of users, date of training, start time, end time.\n')
     print('To search by training code enter 1.\n'
           '             name enter 2.\n'

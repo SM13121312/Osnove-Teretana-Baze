@@ -1,4 +1,5 @@
 from tabulate import tabulate
+from datetime import date, timedelta
 import re
 import sys
 
@@ -201,4 +202,178 @@ def aktivacija_premiuma(cursor):
         else:
             print('No users with that username or you are trying to change package for admin and instructor.\n'
                   'Try again.\n')
+
+def datum_provera():
+    while True:
+        year = input('Unesi godinu ("yyyy") ili "x" za vracanje na meni: ').strip()
+        if year.lower() == 'x':
+            return None
+        month = input('Unesi mesec ("mm") ili "x" za vracanje na meni: ').strip()
+        if month.lower() == 'x':
+            return None
+        day = input('Unesi dan ("dd") ili "x" za vracanje na meni: ').strip()
+        if day.lower() == 'x':
+            return None
+        
+        try:
+            year = int(year)
+            month = int(month)
+            day = int(day)
+            datum = date(year, month, day)
+            return datum
+            
+        except ValueError:
+            print("Uneli ste neispravan datum.\n")
+    
+
+def rezervacije_za_datum(cursor):
+    while True:
+        print('\nLista rezervacija za odabran datum rezervacije\n')
+        datum = datum_provera()
+        if datum is None:
+            return
+        datum_str = datum.strftime('%Y-%m-%d')
+        cursor.execute('SELECT * FROM rezervacije WHERE datum = ?', (datum_str,))
+        data = cursor.fetchall()
+        poruka = ('\nNema liste rezervacija za odabran datum rezervacije\n')
+        naslovi = cursor.description
+            
+        prikaz_izvestaja(cursor, data, poruka, naslovi)
+            
+
+def rezervacije_za_datum_termina(cursor):
+    while True:
+        print('Lista rezervacija za odabran datum termina treninga.\n')
+        datum = datum_provera()
+        if datum is None:
+            return
+        datum_str = datum.strftime('%Y-%m-%d')
+        cursor.execute('SELECT * FROM termin WHERE datum = ?', (datum_str,))
+        data = cursor.fetchall()
+        poruka = ('\nNema liste termina za odabran datum.\n')
+        naslovi = cursor.description
+            
+        prikaz_izvestaja(cursor, data, poruka, naslovi)
+                    
+    
+
+def rezervacije_za_datum_i_instruktora(cursor):
+    while True:
+        print('Lista rezervacija za odabran datum rezervacije i odabranog instruktora')
+        datum = datum_provera()
+        if datum is None:
+            return
+        
+        ime = input('\nUnesi ime instruktora ili "x" za vracanje na meni: ')
+        if ime.lower() == 'x':
+            return
+        prezime = input('Unesi prezime instruktora "x" za vracanje na meni: ')
+        if prezime == 'x':
+            return
+        
+        ime_prezime = f'{ime} {prezime}'
+        print(ime_prezime)
+        cursor.execute('''SELECT termin.sifra_termina, termin.datum, termin.sifra_treninga
+                            FROM termin
+                            JOIN trening
+                                ON termin.sifra_treninga = trening.sifra_treninga
+                            JOIN programi_treninga
+                                ON trening.naziv_programa = programi_treninga.naziv_programa
+                            WHERE instruktor = ? and termin.datum = ?;''', (ime_prezime, datum))
+        data = cursor.fetchall()
+        naslovi = cursor.description
+        poruka = ('Nema to sto ti trazis.')
+        prikaz_izvestaja(cursor, data, poruka, naslovi)
+
+
+def rezervacije_za_dan(cursor):
+    pass
+    
+def rezervacije_po_instruktoru(cursor):
+    print('\nUkupan broj rezervacije po instruktorima u poslednjih 30 dana.\n') 
+    pre_mesec = date.today() - timedelta(days=30)
+    cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", programi_treninga.instruktor
+                                FROM rezervacije
+                                JOIN termin
+                                    ON rezervacije.sifra_termina = termin.sifra_termina
+                                JOIN trening
+                                    ON trening.sifra_treninga = termin.sifra_treninga
+                                JOIN programi_treninga
+                                    ON programi_treninga.naziv_programa = trening.naziv_programa
+                                WHERE rezervacije.datum >= ?
+                                HAVING COUNT(sifra_rezervacije) > 0
+                                ORDER BY sifra_rezervacije DESC''', (pre_mesec,))
+    data = cursor.fetchall()
+    poruka = ('Nema to sto ti trazis.')
+    naslovi = cursor.description
+    prikaz_izvestaja(cursor, data, poruka, naslovi)
+
+
+def rezervacije_za_premium_ili_standard(cursor):
+    print('Ukupan broj rezervacija realizovanih u terminima treninga za koje je potreban premium  ili standard paket članstva ')
+    pre_mesec = date.today() - timedelta(days=30)
+    cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", programi_treninga.paket
+                            FROM rezervacije
+                            JOIN termin
+                                ON rezervacije.sifra_termina = termin.sifra_termina
+                            JOIN trening
+                                ON trening.sifra_treninga = termin.sifra_treninga
+                            JOIN programi_treninga
+                                ON programi_treninga.naziv_programa = trening.naziv_programa
+                            WHERE rezervacije.datum >= ?
+                            GROUP BY programi_treninga.paket
+                            HAVING COUNT(sifra_rezervacije) > 0;''', (pre_mesec,))
+    data = cursor.fetchall()
+    poruka = ('Nema jos nikakvih rezervacija')
+    naslovi = cursor.description
+    prikaz_izvestaja(cursor, data, poruka, naslovi)
+
+def najpopularniji_program(cursor):
+    print('3 najpopularnija programa treninga po broju rezervacija izvršenih u poslednjih godinu dana.')
+    pre_godinu = date.today() - timedelta(days=365)
+    cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", programi_treninga.naziv_programa
+                        FROM rezervacije
+                        JOIN termin
+                            ON rezervacije.sifra_termina = termin.sifra_termina
+                        JOIN trening
+                            ON trening.sifra_treninga = termin.sifra_treninga
+                        JOIN programi_treninga
+                            ON programi_treninga.naziv_programa = trening.naziv_programa
+                        WHERE rezervacije.datum >= ?
+                        GROUP BY programi_treninga.naziv_programa
+                        LIMIT 3;''', (pre_godinu,))
+    data = cursor.fetchall()
+    poruka = 'Brat je nesto opako zezno u sistemu.'
+    naslovi = cursor.description
+    prikaz_izvestaja(cursor, data, poruka, naslovi)        
+
+
+def najpopularniji_dan(cursor):
+    print('Najpopularniji dan u nedelji.')
+    cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", termin.dan
+                        FROM rezervacije
+                        JOIN termin
+                        ON rezervacije.sifra_termina = termin.sifra_termina
+                        GROUP BY termin.dan
+                        ORDER BY sifra_rezervacije DESC''')
+    data = cursor.fetchall()
+    poruka = 'Nema bajo rezervacija nikojih.'
+    naslovi = cursor.description
+    prikaz_izvestaja(cursor, data, poruka, naslovi)
+
+
+def prikaz_izvestaja(cursor, data, poruka, naslovi):
+    if data:
+        headers = [desc[0] for desc in naslovi]
+        table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
+        print(table)
+    else:
+        print(poruka)
+    
+
+
+
+
+
+
 
