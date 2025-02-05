@@ -1,5 +1,5 @@
 from tabulate import tabulate
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import re
 import sys
 
@@ -272,14 +272,15 @@ def rezervacije_za_datum_i_instruktora(cursor):
             return
         
         ime_prezime = f'{ime} {prezime}'
-        print(ime_prezime)
         cursor.execute('''SELECT termin.sifra_termina, termin.datum, termin.sifra_treninga
                             FROM termin
                             JOIN trening
                                 ON termin.sifra_treninga = trening.sifra_treninga
                             JOIN programi_treninga
                                 ON trening.naziv_programa = programi_treninga.naziv_programa
-                            WHERE instruktor = ? and termin.datum = ?;''', (ime_prezime, datum))
+                            JOIN rezervacije
+                                ON rezervacije.sifra_termina = termin.sifra_termina
+                            WHERE instruktor = ? and rezervacije.datum = ?;''', (ime_prezime, datum))
         data = cursor.fetchall()
         naslovi = cursor.description
         poruka = ('Nema to sto ti trazis.')
@@ -287,7 +288,25 @@ def rezervacije_za_datum_i_instruktora(cursor):
 
 
 def rezervacije_za_dan(cursor):
-    pass
+    print('Ukupan broj rezervacija za izabran dan (u nedelji) održavanja treninga')
+    prvi_datum = datetime.today().replace(day=1).strftime('%Y-%m-%d')
+    drugi_datum = (datetime.today().replace(day=28) + timedelta(days=4)).replace(day=1).strftime('%Y-%m-%d')
+
+    cursor.execute('''SELECT COUNT(rezervacije.sifra_rezervacije) AS "broj rezervacija", termin.dan, trening.sifra_treninga, trening.naziv_programa
+                        FROM rezervacije
+                        JOIN termin 
+                        ON termin.sifra_termina = rezervacije.sifra_termina
+                        JOIN trening 
+                        ON trening.sifra_treninga = termin.sifra_treninga
+                        WHERE rezervacije.datum >= ? AND rezervacije.datum < ?
+                        GROUP BY termin.dan, trening.sifra_treninga, trening.naziv_programa
+                        ORDER BY trening.sifra_treninga, rezervacije.sifra_rezervacije DESC''', (prvi_datum, drugi_datum))
+    data = cursor.fetchall()
+    poruka = 'Nema rezervacija nikojih.'
+    naslovi = cursor.description
+    prikaz_izvestaja(cursor, data, poruka, naslovi)
+        
+    
     
 def rezervacije_po_instruktoru(cursor):
     print('\nUkupan broj rezervacije po instruktorima u poslednjih 30 dana.\n') 
@@ -301,6 +320,7 @@ def rezervacije_po_instruktoru(cursor):
                                 JOIN programi_treninga
                                     ON programi_treninga.naziv_programa = trening.naziv_programa
                                 WHERE rezervacije.datum >= ?
+                                GROUP BY programi_treninga.instruktor
                                 HAVING COUNT(sifra_rezervacije) > 0
                                 ORDER BY sifra_rezervacije DESC''', (pre_mesec,))
     data = cursor.fetchall()
@@ -355,7 +375,7 @@ def najpopularniji_dan(cursor):
                         JOIN termin
                         ON rezervacije.sifra_termina = termin.sifra_termina
                         GROUP BY termin.dan
-                        ORDER BY sifra_rezervacije DESC''')
+                        ORDER BY COUNT(sifra_rezervacije) DESC''')
     data = cursor.fetchall()
     poruka = 'Nema bajo rezervacija nikojih.'
     naslovi = cursor.description

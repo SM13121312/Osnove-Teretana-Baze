@@ -16,6 +16,15 @@ from rezervacijeiostalo import *
 connection = sqlite3.connect('BAZAzaprojekat.db')
 cursor = connection.cursor()
 
+danasnji_datum = date.today()
+cursor.execute('''UPDATE korisnici
+                    SET status_korisnika = 'neaktivan'
+                    WHERE datum_isteka = ?''', (danasnji_datum,))
+connection.commit()
+
+
+
+
 def restart_baze():
     with open('Tabele.sql', 'r', encoding = 'utf-8') as file:
         sql_fajl = file.read()
@@ -211,6 +220,8 @@ def izvestaji():
             print('\nIzabrali ste ne postojeci broj.\n')
         
 
+def mesecna_nagrada():
+    pass
 
 #
 #
