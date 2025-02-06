@@ -16,11 +16,23 @@ from rezervacijeiostalo import *
 connection = sqlite3.connect('BAZAzaprojekat.db')
 cursor = connection.cursor()
 
-danasnji_datum = date.today()
+danasnji_datum = date.today().strftime('%Y-%m-%d')
+za_mesec_datum = (date.today() + timedelta(days=30)).strftime('%Y-%m-%d')
 cursor.execute('''UPDATE korisnici
-                    SET status_korisnika = 'neaktivan'
-                    WHERE datum_isteka = ?''', (danasnji_datum,))
+                    SET status_korisnika = 'neaktivan', paket = NULL
+                    WHERE datum_isteka < ?''', (danasnji_datum,))
 connection.commit()
+
+cursor.execute('''UPDATE korisnici
+                    SET status_korisnika = 'aktivan', paket = 'premium', datum_aktivacije = ?, datum_isteka = ?
+                    WHERE status_korisnika = 'neaktivan' AND korisnicko_ime IN (
+                            SELECT rezervacije.korisnicko_ime
+                            FROM rezervacije
+                            WHERE rezervacije.datum BETWEEN datum_aktivacije AND datum_isteka
+                            GROUP BY korisnicko_ime
+                            HAVING COUNT(sifra_rezervacije) > 27)''', (danasnji_datum, za_mesec_datum))
+connection.commit()
+
 
 
 
@@ -36,14 +48,14 @@ def restart_baze():
 def meniprvi():
     print('\n-----FIRST MENU-----\n')
     print('CHOOSE:\n'
-          'Press 1 to register.\n'
-          'Press 2 to log in.\n'
-          'Press 3 to search as guest.\n'
-          'For exit press "x".'
+          '1) REGISTRACIJA\n'
+          '2) PRIJAVA\n'
+          '3) Kruziraj gao guest\n'
+          'x) IZLAZAK'
           )
 
     while True:
-        odabir = input('Your choice is: ')
+        odabir = input('Tvoj izbor: ')
         if odabir == '1':
             registracija()
         elif odabir == '2':
@@ -51,37 +63,37 @@ def meniprvi():
         elif odabir == '3':
             kruziraj_kao_gest()
         elif odabir.lower() == 'x':
-            print('GOODBYE')
+            print('CAOOOOOOO')
             cursor.close()
             connection.close()
             sys.exit()
         else:
-            print('INVALID CHOICE')
+            print('NEVAZECI IZBOR')
 
 
 
 def registracija():
-    print('\n\nPLEASE ENTER YOUR INFORMATION BELOW')
+    print('\n\nUNESI SVOJE INFORMACIJE')
     username = valusername()
     password = valpassword()
 
     while True:
-        name = input('Enter your name: ')
+        name = input('Tvoje ime: ')
         if name.strip() == '':
-            print('Enter your real name.')
+            print('Unesi svoje pravo ime.')
         elif name.isalpha():
             break
         else:
-            print('Enter your real name.')
+            print('Unesi svoje pravo ime.')
 
     while True:
-        surname = input('Enter your surname: ')
+        surname = input('Tvoje prezime: ')
         if surname.strip() == '':
-            print('Enter your real surname.')
+            print('Unesi svoje pravo prezime.')
         elif surname.isalpha():
             break
         else:
-            print('Enter your real surname.')
+            print('Unesi svoje pravo prezime.')
 
     role = 'korisnik'
     status = 'aktivan'
@@ -104,12 +116,12 @@ def valusername():
     pattern = r'^[a-zA-Z0-9]+$'
     print(imenarazna)
     while True:
-        username = input('Enter username, username contains only letters(A-Z) and digits: ')
+        username = input('Izaberi username, username sadrzi samo slova (A-Z) i brojeve: ')
         username = username.lower()
         if username in imenarazna:
-            print('Username already exists.')
+            print('Username vec postoji.')
         elif not re.match(pattern, username):
-            print('Invalid username! Only letters and digits are allowed.')
+            print('Izaberi neki drugi, samo slova i brojevi su dozvoljeni.')
         else:
             return username.strip()
 
@@ -117,14 +129,14 @@ def valusername():
 
 def valpassword():
     while True:
-        password = input('Enter your password: ')
+        password = input('Izaberi sifru: ')
         if len(password) > 6:
             if any(char.isdigit() for char in password):
                 return password
             else:
-                print('Password should contain at least one digit.')
+                print('Sifra treba da sadrzi bar jedan broj.')
         else:
-            print('Password should contain more than 6 chars.')
+            print('Sifra treba da bude dugacka bar 6 karaktera.')
 
 def unosenje_termina():
     datum = date.today()
@@ -157,7 +169,7 @@ def unosenje_termina():
         
         for dan in dani_vezbanja:
             if dan not in dani_u_nedelji:
-                print('Mistake in database.')
+                print('Greska u bazi.')
                 continue
 
             dan_vezbanja = dani_u_nedelji[dan]
@@ -217,7 +229,7 @@ def izvestaji():
         elif odabir.lower() == 'x':
             return
         else:
-            print('\nIzabrali ste ne postojeci broj.\n')
+            print('\nNEVAZECI IZBOR\n')
         
 
 def mesecna_nagrada():
@@ -230,7 +242,7 @@ def mesecna_nagrada():
 # MENUES FOR USERS
 
 def log_in():
-    username = input('ENTER YOUR USERNAME: ')
+    username = input('Unesi username: ')
     cursor.execute('SELECT COUNT(korisnicko_ime) FROM korisnici WHERE korisnicko_ime = ?', (username,))
     brojac = cursor.fetchone()
     if brojac[0] > 0:
@@ -249,36 +261,36 @@ def log_in():
             elif role == 'korisnik':
                 meni_korisnik()
             else:
-                print('!!!THERE IS MISTAKE IN DATABASE!!!')
+                print('!!!Greska u bazi!!!')
         else:
-            print('Wrong password!!!\n')
+            print('Pogresna sifra!!!\n')
     else:
-        print('NO USER WITH THAT USERNAME')
+        print('Nepostojeci korisnik')
         log_in()
 
 def log_out():
     if shared.current_user:
-        print('GOODBYE')
+        print('CAOOOOOOOO')
         current_user = []
         meniprvi()
     else:
-        print('No user is currently logged in.')
+        print('Niko nije trenutno ulogovan.')
 
 
 
 def meni_admin():
     while True:
-        print('\nCurrently you are here as admin.')
-        print('If you want to see program overview enter 1.\n'
-              'If you want to search program enter 2.\n'
-              'If you want to search for date and training time enter 3.\n'
-              'If you want to add new, change or delete old training programs enter 4.\n'
-              'If you want to add new, change or delete old trainings enter 5.\n'
-              'If you want to register instructor or admin enter 6.\n'
-              'If you want to generate new training sessions enter 7.\n'
-              'izvestaji\n'
-              'If you want to log out enter "xxx".\n'
-              'If you want to exit app enter "x".\n')
+        print('\nCao, admine.')
+        print('1) Pregled programa treninga\n'
+              '2) Pretraga programa treninga\n'
+              '3) Pretraga termina treninga\n'
+              '4) Unos, izmena i brisanje programa treninga\n'
+              '5) Unos, izmena i brisanje treninga\n'
+              '6) Registracija novih intruktora i admina\n'
+              '7) Generisanje novih termina treninga\n'
+              '8) Razni izvestaji\n'
+              'xxx) Odjava\n'
+              'x) Izlazak iz aplikacije\n')
         odabir = input('Your choice is: ')
         if odabir == '1':
             pregled_programa(cursor)
@@ -307,23 +319,23 @@ def meni_admin():
             connection.close()
             sys.exit()
         else:
-            print('INVALID CHOICE')
+            print('NEVAZECI IZBOR')
 
 def meni_instruktor():
     while True:
         connection.commit()
-        print('\nCurrently you are here as an instructor.')
-        print('If you want to see program overview enter 1.\n'
-              'If you want to search program enter 2.\n'
-              'If you want to search for date and training time enter 3.\n'
-              'If you want to activate premium package for user enter 4.\n'
-              'If you want to reserve place for training session enter 5.\n'
-              'If you want to do overview of your reservations enter 6.\n'
-              'If you want to delete one of your reservation enter 7.\n'
-              'If you want to search for reserved seats enter 8.\n'
-              'If you want to change users status enter 9.\n'
-              'If you want to log out enter "xxx".\n'
-              'If you want to exit app enter "x".\n')
+        print('\nCao, instruktore.')
+        print('1) Pregled programa treninga\n'
+              '2) Pretraga programa treninga\n'
+              '3) Pretraga termina treninga\n'
+              '4) Aktivacija premium paketa članstva\n'
+              '4) Rezervacija mesta\n'
+              '5) Pregled rezervisanih mesta\n'
+              '6) Poništavanje rezervisanih mesta\n'
+              '7) Pretraga rezervisanih mesta\n'
+              '9) Aktivacija statusa člana\n'
+              'xxx) Odjava\n'
+              'x) Izlazak iz aplikacije\n')
         odabir = input('Your choice is: ')
         if odabir == '1':
             pregled_programa(cursor)
@@ -354,21 +366,21 @@ def meni_instruktor():
             connection.close()
             sys.exit()
         else:
-            print('INVALID CHOICE')
+            print('NEVAZECI IZBOR')
 
 def meni_korisnik():
     while True:
-        print('\nCurrently you are here as an user.')
-        print('If you want to see program overview enter 1.\n'
-              'If you want to search program enter 2.\n'
-              'If you want to search for date and training time enter 3.\n'
-              'If you want to multi_criteria search for programs enter 4.\n'
-              'If you want reserve seat for training session enter 5.\n'
-              'If you want to see all your reservations enter 6.\n'
-              'If you want to delete reservation enter 7.\n'
-              'If you want to log out enter "xxx".\n'
-              'If you want to exit app enter "x".\n')
-        odabir = input('Your choice is: ')
+        print('\nCao, korisnice.')
+        print('1) Pregled programa treninga\n'
+              '2) Pretraga programa treninga\n'
+              '3) Pretraga termina treninga\n'
+              '4) Višekriterijumska pretraga programa treninga. \n'
+              '5) Rezervacija mesta.\n'
+              '6) Pregled rezervisanih mesta\n'
+              '7) Poništavanje rezervacije mesta\n'
+              'xxx) Odjava\n'
+              'x) Izlazak iz aplikacije\n')
+        odabir = input('Tvoj odabir: ')
         if odabir == '1':
             pregled_programa(cursor)
         elif odabir == '2':
@@ -392,17 +404,17 @@ def meni_korisnik():
             connection.close()
             sys.exit()
         else:
-            print('INVALID CHOICE')
+            print('NEVAZECI IZBOR')
 
 def kruziraj_kao_gest():
     while True:
         print('\nCurrently you are here as a guest.')
-        print('If you want to log in enter 1.\n'
-              'If you want to register enter 2\n'
-              'If you want to see program overview enter 3.\n'
-              'If you want to search program enter 4.\n'
-              'If you want to search for date and training time enter 5.\n'
-              'If you want to exit app enter "x".\n')
+        print('1) PRIJAVA\n'
+              '2) REGISTRACIJA\n'
+              '3) Pregled programa treninga\n'
+              '4) Pretraga programa treninga\n'
+              '5) Pretraga termina treninga\n'
+              'x) Izlazak iz aplikacije\n')
         odabir = input('Your choice is: ')
         if odabir == '1':
             log_in()
@@ -419,7 +431,7 @@ def kruziraj_kao_gest():
             connection.close()
             sys.exit()
         else:
-            print('INVALID CHOICE')
+            print('NEVAZECI IZBOR')
 
 
 

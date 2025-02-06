@@ -9,23 +9,22 @@ from datetime import date
 
 
 def visekriterijumska_pretraga_programa(cursor):
-    print('PROGRAM OVERVIEW')
+    print('\nPregled dostupnih programa treninga')
     pregled_programa(cursor)
-    print('\nOVERVIEW OF TRAINING PROGRAMS')
-    print("\nMulti-Criteria Search of Training Programs")
-    print("You can search by one or more criteria. Press enter if you don't want to search by that criterion and move to another one.")
-    print('You can search programs by name, type, duration (min. time, max. time, time limit), and required package\n')
-
+    
     while True:
+        print("\nVišekriterijumska pretraga programa treninga")
+        print("Pretrazujete po jednom ili vise kriterijuma. Pritisni 'enter' da preskocis kriterijum i predjes na sledeci.")
+        print('Pretražujete listu programa po nazivu, vrsti, trajanju treninga (minimalno trajanje, maksimalno trajanje, navođenje granica), potrebnom uplaćenom paketu.\n')
         query1 = 'SELECT * FROM programi_treninga WHERE 1=1 '
         values = []
 
-        odabir = input('\nIf you want to return to the menu, enter "x" or press Enter to continue the search: ')
+        odabir = input('\nAko zelite da se vratite na meni pritisnite sada "x" ili "enter" da nastavite za pretrazivanjem: ').strip()
         if odabir.lower() == 'x':
             break
 
         while True:
-            naziv = input("\nEnter program name: ").strip()
+            naziv = input("\nUnesite naziv programa: ").strip()
             if naziv == '':
                 break
             elif naziv.isalpha():
@@ -33,7 +32,7 @@ def visekriterijumska_pretraga_programa(cursor):
                 values.append(naziv)
                 break
             else:
-                print('Program names only consist of letters.\nTry again.\n')
+                print('Program sadrzi samo slova.\nUnesite ponovo.\n')
 
         while True:
             vrsta = input("Enter program type: ").strip()
@@ -163,20 +162,29 @@ def reg_instruktora(cursor):
 def aktivacija_statusa(cursor):
     while True:
         print('You are currently activating status for user.')
-        cursor.execute('SELECT korisnicko_ime, ime, prezime, datum_aktivacije AS "datum aktivacije", datum_isteka AS "datum isteka" FROM korisnici WHERE status = "neaktivan" AND uloga = "korisnik"')
+        cursor.execute('SELECT korisnicko_ime, ime, prezime, datum_aktivacije AS "datum aktivacije", datum_isteka AS "datum isteka" FROM korisnici WHERE status_korisnika = "neaktivan" AND uloga = "korisnik"')
         data = cursor.fetchall()
         sva_imena = [informacija[0] for informacija in data]
-        print(sva_imena)
         if data:
             headers = [desc[0] for desc in cursor.description]
             table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
             print(table)
-
-            odabir = input('Enter username of user you want to activate status or enter "x" to return to menu: ')
-            break
+            while True:
+                odabir = input('Enter username of user you want to activate status or enter "x" to return to menu: ')
+                datetoday = date.today().isoformat()
+                exp_date = (date.today() + timedelta(days=30)).isoformat()
+                if odabir in sva_imena:
+                    cursor.execute('''UPDATE korisnici
+                                   SET status_korisnika = "aktivan", paket = "standard", datum_aktivacije = ?, datum_isteka = ?
+                                   WHERE korisnicko_ime = ?''', ( datetoday, exp_date, odabir))
+                    break
+                elif odabir.lower() == 'x':
+                    return
+                else:
+                    print('\nTaj vec ima paket i status na fejsu.\n')
 
         else:
-            print('\nTHERE IS NO USER WHO IS NOT ACTIVE.\n')
+            print('\nSada svi korisnici imaju i status i paket.\n')
             return
 
 
@@ -227,6 +235,7 @@ def datum_provera():
     
 
 def rezervacije_za_datum(cursor):
+    naziv_fajla = 'rezervacije_za_datum'
     while True:
         print('\nLista rezervacija za odabran datum rezervacije\n')
         datum = datum_provera()
@@ -238,10 +247,12 @@ def rezervacije_za_datum(cursor):
         poruka = ('\nNema liste rezervacija za odabran datum rezervacije\n')
         naslovi = cursor.description
             
-        prikaz_izvestaja(cursor, data, poruka, naslovi)
+        prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)
+        
             
 
 def rezervacije_za_datum_termina(cursor):
+    naziv_fajla = 'rezervacije_za_datum_termina'
     while True:
         print('Lista rezervacija za odabran datum termina treninga.\n')
         datum = datum_provera()
@@ -253,11 +264,12 @@ def rezervacije_za_datum_termina(cursor):
         poruka = ('\nNema liste termina za odabran datum.\n')
         naslovi = cursor.description
             
-        prikaz_izvestaja(cursor, data, poruka, naslovi)
+        prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)
                     
     
 
 def rezervacije_za_datum_i_instruktora(cursor):
+    naziv_fajla = 'rezervacije_za_datum_i_instruktora'
     while True:
         print('Lista rezervacija za odabran datum rezervacije i odabranog instruktora')
         datum = datum_provera()
@@ -284,10 +296,11 @@ def rezervacije_za_datum_i_instruktora(cursor):
         data = cursor.fetchall()
         naslovi = cursor.description
         poruka = ('Nema to sto ti trazis.')
-        prikaz_izvestaja(cursor, data, poruka, naslovi)
+        prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)
 
 
 def rezervacije_za_dan(cursor):
+    naziv_fajla = 'rezervacije_za_dan'
     print('Ukupan broj rezervacija za izabran dan (u nedelji) održavanja treninga')
     prvi_datum = datetime.today().replace(day=1).strftime('%Y-%m-%d')
     drugi_datum = (datetime.today().replace(day=28) + timedelta(days=4)).replace(day=1).strftime('%Y-%m-%d')
@@ -304,11 +317,12 @@ def rezervacije_za_dan(cursor):
     data = cursor.fetchall()
     poruka = 'Nema rezervacija nikojih.'
     naslovi = cursor.description
-    prikaz_izvestaja(cursor, data, poruka, naslovi)
+    prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)
         
     
     
 def rezervacije_po_instruktoru(cursor):
+    naziv_fajla = 'rezervacije_po_instruktoru'
     print('\nUkupan broj rezervacije po instruktorima u poslednjih 30 dana.\n') 
     pre_mesec = date.today() - timedelta(days=30)
     cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", programi_treninga.instruktor
@@ -326,10 +340,11 @@ def rezervacije_po_instruktoru(cursor):
     data = cursor.fetchall()
     poruka = ('Nema to sto ti trazis.')
     naslovi = cursor.description
-    prikaz_izvestaja(cursor, data, poruka, naslovi)
+    prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)
 
 
 def rezervacije_za_premium_ili_standard(cursor):
+    naziv_fajla = 'rezervacije_za_premium_ili_standard'
     print('Ukupan broj rezervacija realizovanih u terminima treninga za koje je potreban premium  ili standard paket članstva ')
     pre_mesec = date.today() - timedelta(days=30)
     cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", programi_treninga.paket
@@ -346,9 +361,10 @@ def rezervacije_za_premium_ili_standard(cursor):
     data = cursor.fetchall()
     poruka = ('Nema jos nikakvih rezervacija')
     naslovi = cursor.description
-    prikaz_izvestaja(cursor, data, poruka, naslovi)
+    prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)
 
 def najpopularniji_program(cursor):
+    naziv_fajla = 'najpopularniji_program'
     print('3 najpopularnija programa treninga po broju rezervacija izvršenih u poslednjih godinu dana.')
     pre_godinu = date.today() - timedelta(days=365)
     cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", programi_treninga.naziv_programa
@@ -365,10 +381,11 @@ def najpopularniji_program(cursor):
     data = cursor.fetchall()
     poruka = 'Brat je nesto opako zezno u sistemu.'
     naslovi = cursor.description
-    prikaz_izvestaja(cursor, data, poruka, naslovi)        
+    prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)        
 
 
 def najpopularniji_dan(cursor):
+    naziv_fajla = 'najpopularniji_dan'
     print('Najpopularniji dan u nedelji.')
     cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", termin.dan
                         FROM rezervacije
@@ -379,16 +396,29 @@ def najpopularniji_dan(cursor):
     data = cursor.fetchall()
     poruka = 'Nema bajo rezervacija nikojih.'
     naslovi = cursor.description
-    prikaz_izvestaja(cursor, data, poruka, naslovi)
+    prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla)
 
 
-def prikaz_izvestaja(cursor, data, poruka, naslovi):
+def prikaz_izvestaja(cursor, data, poruka, naslovi, naziv_fajla):
     if data:
         headers = [desc[0] for desc in naslovi]
         table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
         print(table)
     else:
         print(poruka)
+    
+    while True:
+        odabir = input('\nDa li zelis da se izvestaj otstampa, da/ne: ')
+        if odabir.lower() == 'da':
+            filename = naziv_fajla + '.txt'
+            with open(filename, 'w') as fajl:
+                for line in data:
+                    fajl.write('|'.join(map(str, line)) + '\n')
+            break
+        elif odabir.lower() == 'ne':
+            break
+        else:
+            print('\nJel hoces ili neces?\n')
     
 
 
