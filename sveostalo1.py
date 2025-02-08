@@ -24,7 +24,7 @@ def visekriterijumska_pretraga_programa(cursor):
             break
 
         while True:
-            naziv = input("\nUnesite naziv programa: ").strip()
+            naziv = input("\nUnesi naziv programa: ").strip()
             if naziv == '':
                 break
             elif naziv.isalpha():
@@ -35,7 +35,7 @@ def visekriterijumska_pretraga_programa(cursor):
                 print('Program sadrzi samo slova.\nUnesite ponovo.\n')
 
         while True:
-            vrsta = input("Enter program type: ").strip()
+            vrsta = input("Unesi vrstu programa: ").strip()
             if vrsta == '':
                 break
             elif vrsta.isalpha():
@@ -43,10 +43,10 @@ def visekriterijumska_pretraga_programa(cursor):
                 values.append(vrsta)
                 break
             else:
-                print('Program types only consist of letters.\nTry again.\n')
+                print('Vrsta programa sadrzi samo slova.\nUnesite ponovo.\n')
 
         while True:
-            min_time = input("Enter min. time in minutes: ").strip()
+            min_time = input("Unesi minimalno trajanje treninga: ").strip()
             if min_time == '':
                 break
             elif min_time.isdigit():
@@ -54,10 +54,10 @@ def visekriterijumska_pretraga_programa(cursor):
                 values.append(min_time)
                 break
             else:
-                print('Enter min time in digits.\nTry again.\n')
+                print('Unesi samo brojeve.\nUnesi ponovo.\n')
 
         while True:
-            max_time = input("Enter max. time in minutes: ").strip()
+            max_time = input("Unesi maksimalno trajanje treninga: ").strip()
             if max_time == '':
                 break
             elif max_time.isdigit():
@@ -65,10 +65,10 @@ def visekriterijumska_pretraga_programa(cursor):
                 values.append(max_time)
                 break
             else:
-                print('Enter max time in digits.\nTry again.\n')
+                print('Unesi samo brojeve.\nUnesi ponovo.\n')
 
         while True:
-            time_limit = input("Enter time limit in the format (min_minutes:max_minutes): ").strip()
+            time_limit = input("Unesite vremensko ogranicenje u formatu 'min. minuta: max. minuta': ").strip()
             pattern = r"^\d+:\d+$"
             if time_limit == '':
                 break
@@ -78,10 +78,10 @@ def visekriterijumska_pretraga_programa(cursor):
                 values.extend([min_vreme, max_vreme])
                 break
             else:
-                print("Invalid format. Please enter time in the format (min_minutes:max_minutes), e.g., 10:30.")
+                print("Nevalja format. Unesite u formatu 'min. minuta: max. minuta', npr. 10:30.")
 
         while True:
-            paket = input("Enter required package (standard/premium): ").strip()
+            paket = input("Unesite paket (standard/premium): ").strip()
             if paket == '':
                 break
             elif paket.lower() in ['standard', 'premium']:
@@ -89,7 +89,7 @@ def visekriterijumska_pretraga_programa(cursor):
                 values.append(paket)
                 break
             else:
-                print('Package should be "standard" or "premium".\nTry again.\n')
+                print('Paket je ili "standard" ili "premium".\nUnesite ponovo.\n')
 
         cursor.execute(query1, values)
         data = cursor.fetchall()
@@ -98,7 +98,7 @@ def visekriterijumska_pretraga_programa(cursor):
             table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
             print(table)
         else:
-            print("No programs found matching your criteria.")
+            print("Nema bato programa sa tvojim kriteriumima, previse si zahtevan.")
 
 
 def valusername(cursor):
@@ -106,62 +106,62 @@ def valusername(cursor):
     imenarazna = cursor.fetchall()
     pattern = r'^[a-zA-Z0-9]+$'
     while True:
-        username = input('Enter username, username contains only letters(A-Z) and digits: ')
+        username = input('Izaberi username, username sadrzi samo slova (A-Z) i brojeve: ')
         username = username.lower()
         if any(username == ime[0] for ime in imenarazna):
-            print('Username already exists.')
+            print('Username vec postoji.')
         elif not re.match(pattern, username):
-            print('Invalid username! Only letters and digits are allowed.')
+            print('Izaberi neki drugi, samo slova i brojevi su dozvoljeni.')
         else:
             return username.strip()
 
 def valpassword(cursor):
     while True:
-        password = input('Enter your password: ')
+        password = input('Unesi sifru: ')
         if len(password) > 6:
             if any(char.isdigit() for char in password):
                 return password
             else:
-                print('Password should contain at least one digit.')
+                print('Sifra treba da sadrzi bar jedan broj.')
         else:
-            print('Password should contain more than 6 chars.')
+            print('Sifra treba da bude dugacka bar 7 karaktera.')
 
 def reg_instruktora(cursor):
-    print('NEW INSTRUCTOR REGISTRATION AND ADMINS')
+    print('Registracija novih instruktora i admina.')
 
     username = valusername(cursor)
     password = valpassword(cursor)
     while True:
-        name = input('Enter your name: ')
+        name = input('Unesi ime: ')
         if name.strip() == '':
-            print('Enter your real name.')
+            print('Unesi pravo ime.')
         elif name.isalpha():
             break
         else:
-            print('Enter your real name.')
+            print('Unesi pravo ime.')
 
     while True:
-        surname = input('Enter your surname: ')
+        surname = input('Unesi prezime: ')
         if surname.strip() == '':
-            print('Enter your real surname.')
+            print('Unesi pravo prezime.')
         elif name.isalpha():
             break
         else:
-            print('Enter your real surname.')
+            print('Unesi pravo prezime.')
 
     while True:
-        uloga = input('Enter role ("instruktor" or "admin"): ')
+        uloga = input('Unesi ulogu ("instruktor" ili "admin"): ')
         if uloga in ['instruktor', 'admin']:
             break
         else:
-            print('Invalid choice.\n'
-                  'Try again.\n')
+            print('Nepostojeca uloga.\n'
+                  'Unesi ponovo.\n')
 
     cursor.execute('INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES (?, ?, ?, ?, ?)', (username, password, name, surname, uloga))
 
 def aktivacija_statusa(cursor):
     while True:
-        print('You are currently activating status for user.')
+        print('Aktivacija statusa člana.')
         cursor.execute('SELECT korisnicko_ime, ime, prezime, datum_aktivacije AS "datum aktivacije", datum_isteka AS "datum isteka" FROM korisnici WHERE status_korisnika = "neaktivan" AND uloga = "korisnik"')
         data = cursor.fetchall()
         sva_imena = [informacija[0] for informacija in data]
@@ -170,7 +170,7 @@ def aktivacija_statusa(cursor):
             table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
             print(table)
             while True:
-                odabir = input('Enter username of user you want to activate status or enter "x" to return to menu: ')
+                odabir = input('Unesite username korisnika ili "x" za vracanje na meni: ')
                 datetoday = date.today().isoformat()
                 exp_date = (date.today() + timedelta(days=30)).isoformat()
                 if odabir in sva_imena:
@@ -190,26 +190,23 @@ def aktivacija_statusa(cursor):
 
 
 def aktivacija_premiuma(cursor):
-    print('You are currently activating premium package for user.')
-    cursor.execute('SELECT korisnicko_ime FROM korisnici')
+    print('Aktivacija premium paketa članstva.')
+    cursor.execute('SELECT korisnicko_ime FROM korisnici WHERE status_korisnika = "aktivan"')
     imenarazna = cursor.fetchall()
+    datum = date.today().isoformat() 
+    za_mesec = (date.today() + timedelta(days=30)).isoformat()
+    
     while True:
-        username = input('\nEnter username or "x" if you want to return to menu: ')
+        username = input('\nUnesi username ili "x" za vracanje na meni: ')
         username = username.lower()
         if username.lower() == 'x':
             break
         elif any(username == ime[0] for ime in imenarazna):
-            cursor.execute('UPDATE korisnici SET paket = "premium" WHERE korisnicko_ime = ? AND uloga = "standard"', (username,))
-            role_result = cursor.fetchone()
-
-            if role_result and role_result[0] == 'standard':
-                cursor.execute('UPDATE korisnici SET paket = "premium" WHERE korisnicko_ime = ?', (username,))
-                print(f"Package successfully changed to 'premium' for user: {username}.")
-            else:
-                print(f"Package not changed. The role for user '{username}' is not 'standard'.")
+            cursor.execute('UPDATE korisnici SET paket = "premium", datum_aktivacije = ?, datum_isteka = ? WHERE korisnicko_ime = ?', (datum, za_mesec, username))
+            print('Uspesno promenjen paket.')
         else:
-            print('No users with that username or you are trying to change package for admin and instructor.\n'
-                  'Try again.\n')
+            print('Nema korisnika sa aktivnim statusom sa tim usernamom.\n'
+                  'Unesi ponovo.\n')
 
 def datum_provera():
     while True:

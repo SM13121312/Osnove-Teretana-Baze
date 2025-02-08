@@ -136,7 +136,7 @@ def valpassword():
             else:
                 print('Sifra treba da sadrzi bar jedan broj.')
         else:
-            print('Sifra treba da bude dugacka bar 6 karaktera.')
+            print('Sifra treba da bude dugacka bar 7 karaktera.')
 
 def unosenje_termina():
     datum = date.today()
@@ -329,10 +329,10 @@ def meni_instruktor():
               '2) Pretraga programa treninga\n'
               '3) Pretraga termina treninga\n'
               '4) Aktivacija premium paketa članstva\n'
-              '4) Rezervacija mesta\n'
-              '5) Pregled rezervisanih mesta\n'
-              '6) Poništavanje rezervisanih mesta\n'
-              '7) Pretraga rezervisanih mesta\n'
+              '5) Rezervacija mesta\n'
+              '6) Pregled rezervisanih mesta\n'
+              '7) Poništavanje rezervisanih mesta\n'
+              '8) Pretraga rezervisanih mesta\n'
               '9) Aktivacija statusa člana\n'
               'xxx) Odjava\n'
               'x) Izlazak iz aplikacije\n')
