@@ -9,9 +9,10 @@ connection = sqlite3.connect('BAZAzaprojekat.db')
 cursor = connection.cursor()
 
 
-dasnji_datum = date(2025, 2, 23)
-prosli_datum = dasnji_datum - timedelta(days=30)
-print(prosli_datum)
+cursor.execute('SELECT sifra_treninga, dan FROM trening')
+informacije = cursor.fetchall()
+for proiz, info in informacije:
+  print(kita)
 
 
 cursor.close()

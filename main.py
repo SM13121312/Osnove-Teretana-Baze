@@ -161,6 +161,10 @@ def unosenje_termina():
 
     cursor.execute('SELECT sifra_treninga, dan FROM trening')
     informacije = cursor.fetchall()
+    if informacije == []:
+        print("prazan skup")
+    else:
+        print(informacije)
 
     for sifra_treninga, dan in informacije:
         dani_vezbanja = dan.lower().split('|') 
@@ -193,7 +197,10 @@ def unosenje_termina():
                 if sifra_termina not in sve_sifre_termina:
                     break
 
-            cursor.execute('INSERT INTO termin VALUES (?, ?, ?, ?)', (sifra_termina, datic, sifra_treninga, danko_bananko)) 
+            # try:
+            #     cursor.execute('INSERT INTO termin VALUES (?, ?, ?, ?)', (sifra_termina, datic, sifra_treninga, danko_bananko))
+            # except sqlite3.Error as e:
+            #     print("SQL Error:", e)
 
     print('GG you did it!!!')        
     connection.commit()
@@ -443,9 +450,8 @@ def kruziraj_kao_gest():
 
 
 if __name__ == '__main__':
-    # cursor.execute('DELETE FROM termin')
-    # connection.commit()
+    restart_baze()
+    
     # unosenje_termina()
-    # connection.commit()
     meniprvi()
 
