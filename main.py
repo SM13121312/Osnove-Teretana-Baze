@@ -37,6 +37,7 @@ def restart_baze():
     milan = sql_fajl.split(';')
     for i in range(0, len(milan)):
         cursor.execute(milan[i])
+        connection.commit();
 
 def meniprvi():
     print('\n-----FIRST MENU-----\n')
