@@ -13,27 +13,20 @@ from sveostalo1 import *
 from rezervacijeiostalo import *
 
 
-connection = sqlite3.connect('BAZAzaprojekat.db')
+connection = sqlite3.connect('Baza.db')
 cursor = connection.cursor()
 
-danasnji_datum = date.today().strftime('%Y-%m-%d')
-za_mesec_datum = (date.today() + timedelta(days=30)).strftime('%Y-%m-%d')
-cursor.execute('''UPDATE korisnici
-                    SET status_korisnika = 'neaktivan', paket = NULL
-                    WHERE datum_isteka < ?''', (danasnji_datum,))
-connection.commit()
-
-cursor.execute('''UPDATE korisnici
-                    SET status_korisnika = 'aktivan', paket = 'premium', datum_aktivacije = ?, datum_isteka = ?
-                    WHERE status_korisnika = 'neaktivan' AND korisnicko_ime IN (
-                            SELECT rezervacije.korisnicko_ime
-                            FROM rezervacije
-                            WHERE rezervacije.datum BETWEEN datum_aktivacije AND datum_isteka
-                            GROUP BY korisnicko_ime
-                            HAVING COUNT(sifra_rezervacije) > 27)''', (danasnji_datum, za_mesec_datum))
-connection.commit()
 
 
+
+
+def provera_statusa():
+    danasnji_datum = date.today().strftime('%Y-%m-%d')
+    za_mesec_datum = (date.today() + timedelta(days=30)).strftime('%Y-%m-%d')
+    cursor.execute('''UPDATE korisnici
+                        SET status_korisnika = 'neaktivan', paket = NULL
+                        WHERE datum_isteka < ?''', (danasnji_datum,))
+    connection.commit()
 
 
 
@@ -240,7 +233,15 @@ def izvestaji():
         
 
 def mesecna_nagrada():
-    pass
+    cursor.execute('''UPDATE korisnici
+                    SET status_korisnika = 'aktivan', paket = 'premium', datum_aktivacije = ?, datum_isteka = ?
+                    WHERE status_korisnika = 'neaktivan' AND korisnicko_ime IN (
+                            SELECT rezervacije.korisnicko_ime
+                            FROM rezervacije
+                            WHERE rezervacije.datum BETWEEN datum_aktivacije AND datum_isteka
+                            GROUP BY korisnicko_ime
+                            HAVING COUNT(sifra_rezervacije) > 27)''', (danasnji_datum, za_mesec_datum))
+    connection.commit();
 
 #
 #
