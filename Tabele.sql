@@ -15,6 +15,9 @@ CREATE TABLE korisnici (
 );
 
 INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES ('admin', 'admin123', 'Lanmi', 'Miami', 'admin');
+INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES('boza', 'boza1234', 'Boza', 'Paunovic', 'instruktor');
+INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES('moma', 'moma1234', 'Moma', 'Paunovic', 'instruktor');
+INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES('ljubomir', 'ljubomir1234', 'Ljuba', 'Misic', 'instruktor');
 
 
 DROP TABLE IF EXISTS sale;
@@ -26,6 +29,11 @@ CREATE TABLE sale (
   PRIMARY KEY (sifra_sale)
 );
 
+INSERT INTO sale (sifra_sale, naziv_sale, broj_redova, oznaka_mesta)
+VALUES
+  (1, 'Sala 1', 5, 'ABCD'),
+  (2, 'Sala 2', 3, 'ABC'),
+  (3, 'Sala 3', 6, 'AB');
 
 DROP TABLE IF EXISTS programi_treninga;
 CREATE TABLE programi_treninga (
@@ -36,6 +44,12 @@ CREATE TABLE programi_treninga (
   opis varchar(100),
   paket varchar(20)
 );
+
+INSERT INTO programi_treninga (naziv_programa, vrsta_programa, trajanje, instruktor, opis, paket)
+VALUES
+  ('Kardio', 'Hard-core', 60, 'Ljuba Misic', 'Skinite mast i loj, za sve narodne mase.', 'standard'),
+  ('Push-pull', 'Medium', 60, 'Moma Paunovic', 'Vezbe na sipkama, za zene i muskarce.', 'premium'),
+  ('Leg-day', 'Easy', 75, 'Boza Paunovic', 'Prenosite pakete sa lakocom.', 'standard');
 
 
 DROP TABLE IF EXISTS trening;
@@ -49,6 +63,15 @@ CREATE TABLE trening (
   FOREIGN KEY (naziv_programa) REFERENCES programi_treninga (naziv_programa) ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (sifra_sale) REFERENCES sale (sifra_sale) ON DELETE SET NULL
 );
+
+INSERT INTO trening (sifra_treninga, sifra_sale, vreme_pocetka, vreme_kraja, dan, naziv_programa)
+VALUES
+  (1111, 1, '09:00', '10:30', 'ponedeljak|utorak|sreda', 'Kardio'),
+  (2222, 1, '10:30', '11:30', 'utorak|sreda', 'Kardio'),
+  (3333, 2, '12:30', '14:00', 'sreda', 'Leg-day'),
+  (4444, 2, '14:20', '15:00', 'cetvrtak|petak', 'Leg-day'),
+  (5555, 3, '15:30', '16:30', 'petak', 'Push-pull'),
+  (6666, 3, '16:00', '17:30', 'subota', 'Push-pull');
 
 
 DROP TABLE IF EXISTS termin;

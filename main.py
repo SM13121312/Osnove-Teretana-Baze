@@ -38,6 +38,7 @@ def restart_baze():
     for i in range(0, len(milan)):
         cursor.execute(milan[i])
         connection.commit();
+        
 
 def meniprvi():
     print('\n-----FIRST MENU-----\n')
@@ -155,10 +156,10 @@ def unosenje_termina():
 
     cursor.execute('SELECT sifra_treninga, dan FROM trening')
     informacije = cursor.fetchall()
-    if informacije == []:
-        print("prazan skup")
-    else:
-        print(informacije)
+    # if informacije == []:
+    #     print("prazan skup")
+    # else:
+    #     print(informacije)
 
     for sifra_treninga, dan in informacije:
         dani_vezbanja = dan.lower().split('|') 
@@ -179,8 +180,17 @@ def unosenje_termina():
                 datum_za_loop += timedelta(days=1)
 
         for datic in svi_datumi:
-            danko_bananko = dani_u_listi[datic.weekday()]
-            datic = datic.strftime("%Y-%m-%d")
+            datic_str = datic.strftime("%Y-%m-%d")
+
+            # cursor.execute(
+            #     'SELECT COUNT(*) FROM termin WHERE sifra_treninga = ? AND datum = ?',
+            #     (sifra_treninga, datic_str)
+            # )
+            # already_exists = cursor.fetchone()[0] > 0
+
+            # if already_exists:
+            #     print("sekta")
+            #     continue  
 
             while True:
                 cursor.execute('SELECT sifra_termina FROM termin')
@@ -191,13 +201,11 @@ def unosenje_termina():
                 if sifra_termina not in sve_sifre_termina:
                     break
 
-            # try:
-            #     cursor.execute('INSERT INTO termin VALUES (?, ?, ?, ?)', (sifra_termina, datic, sifra_treninga, danko_bananko))
-            # except sqlite3.Error as e:
-            #     print("SQL Error:", e)
-
-    print('GG you did it!!!')        
-    connection.commit()
+            try:
+                cursor.execute('INSERT INTO termin VALUES (?, ?, ?)', (sifra_termina, datic_str, sifra_treninga))
+                print("uzad")
+            except sqlite3.Error as e:
+                print("SQL Error:", e)
   
 
 def izvestaji():
@@ -452,8 +460,8 @@ def kruziraj_kao_gest():
 
 
 if __name__ == '__main__':
-    restart_baze()
+    # restart_baze()
     
-    # unosenje_termina()
+    unosenje_termina()
     meniprvi()
 
