@@ -163,8 +163,11 @@ def aktivacija_statusa(cursor):
     while True:
         print('Aktivacija statusa člana.')
         cursor.execute('SELECT korisnicko_ime, ime, prezime, datum_aktivacije AS "datum aktivacije", datum_isteka AS "datum isteka" FROM korisnici WHERE status_korisnika = "neaktivan" AND uloga = "korisnik"')
+        # cursor.execute('UPDATE korisnici SET status_korisnika = "neaktivan" WHERE status_korisnika = "aktivan"')
+        # cursor.execute("SELECT * FROM korisnici")
         data = cursor.fetchall()
         sva_imena = [informacija[0] for informacija in data]
+        
         if data:
             headers = [desc[0] for desc in cursor.description]
             table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
@@ -302,14 +305,14 @@ def rezervacije_za_dan(cursor):
     prvi_datum = datetime.today().replace(day=1).strftime('%Y-%m-%d')
     drugi_datum = (datetime.today().replace(day=28) + timedelta(days=4)).replace(day=1).strftime('%Y-%m-%d')
 
-    cursor.execute('''SELECT COUNT(rezervacije.sifra_rezervacije) AS "broj rezervacija", termin.dan, trening.sifra_treninga, trening.naziv_programa
+    cursor.execute('''SELECT COUNT(rezervacije.sifra_rezervacije) AS "broj rezervacija", termin.dan_termina, trening.sifra_treninga, trening.naziv_programa
                         FROM rezervacije
                         JOIN termin 
                         ON termin.sifra_termina = rezervacije.sifra_termina
                         JOIN trening 
                         ON trening.sifra_treninga = termin.sifra_treninga
                         WHERE rezervacije.datum >= ? AND rezervacije.datum < ?
-                        GROUP BY termin.dan, trening.sifra_treninga, trening.naziv_programa
+                        GROUP BY termin.dan_termina, trening.sifra_treninga, trening.naziv_programa
                         ORDER BY trening.sifra_treninga, rezervacije.sifra_rezervacije DESC''', (prvi_datum, drugi_datum))
     data = cursor.fetchall()
     poruka = 'Nema rezervacija nikojih.'
@@ -384,11 +387,11 @@ def najpopularniji_program(cursor):
 def najpopularniji_dan(cursor):
     naziv_fajla = 'najpopularniji_dan'
     print('Najpopularniji dan u nedelji.')
-    cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", termin.dan
+    cursor.execute('''SELECT COUNT(sifra_rezervacije) AS "broj rezervacija", termin.dan_termina
                         FROM rezervacije
                         JOIN termin
                         ON rezervacije.sifra_termina = termin.sifra_termina
-                        GROUP BY termin.dan
+                        GROUP BY termin.dan_termina
                         ORDER BY COUNT(sifra_rezervacije) DESC''')
     data = cursor.fetchall()
     poruka = 'Nema bajo rezervacija nikojih.'

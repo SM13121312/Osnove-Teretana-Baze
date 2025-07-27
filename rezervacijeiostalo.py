@@ -1,5 +1,6 @@
+from multiprocessing import connection
 from tabulate import tabulate
-from datetime import date
+from datetime import date, datetime
 import random
 import shared
 from pregpretiostalo import pretragatermina
@@ -8,8 +9,23 @@ from pregpretiostalo import pretragatermina
 
 def pregled_termina(cursor):
     print('\nPregled termina treninga\n')
-    cursor.execute('SELECT * FROM termin')
+    
+    danasnji_datum = date.today()
+
+    trenutno_vreme = datetime.now().strftime("%H:%M")
+
+    cursor.execute('''
+        SELECT * 
+        FROM termin
+        JOIN trening ON termin.sifra_treninga = trening.sifra_treninga
+        WHERE termin.datum >= ? AND trening.vreme_pocetka > ?
+    ''', (danasnji_datum, trenutno_vreme))
     data = cursor.fetchall()
+    
+    if not data:
+        print("Nema termina koji ti trebaju")
+        return
+    
     headers = [desc[0] for desc in cursor.description]
     table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
     print(table)
@@ -19,16 +35,16 @@ def rezervacija_mesta(cursor):
         print('\n!!!!!Plati clanarinu pa se onda igraj.!!!!!\n')
         return
     while True:
-        print('You can reserve directly by entering training session code or by searching training sessions.\n'
-              'If you want to enter code directly enter 1.\n'
-              'If you want to search for session enter 2.\n'
-              'To get back to your menu enter "x".\n')
-        odabir = input('Enter your choice: ')
+        print('Mozes rezervisati direktnim unosom sifre termina ili prvo hoces da istrazis termine: \n'
+              '1) Direktan unos\n'
+              '2) Prvo istrazi termine\n'
+              'x) Za povratak na meni\n')
+        odabir = input('Tvoj izbor: ')
         if odabir == '1':
             pregled_termina(cursor)
-            print('You are currently reserving session directly by entering session code.')
+            print('Direktan unos')
             while True:
-                sifra = input('Enter session code: ')
+                sifra = input('Unesi sifru: ')
                 if sifra == 'x':
                     return
 
@@ -42,26 +58,25 @@ def rezervacija_mesta(cursor):
 
                 paket = cursor.fetchone()
                 if paket is None:
-                    print('\nEnter one of existing session codes.\n'
-                          'Try again.\n')
+                    print('\nUnesi neki od postojecih.\n'
+                          'Pokusaj ponovo.\n')
                     continue
                 else:
                     paket = paket[0]
                 if not paket:
-                    print('No session with that code.\n'
-                          'Try again.\n')
+                    print('Nema termina sa tom sifrom.\n'
+                          'Pokusaj ponovo.\n')
                 elif shared.current_user[0]['package'] == 'premium':
-                    print('Bravo majmune imas premium')
+                    print('Bravo imas premium')
                     odabir_mesta(cursor, sifra)
                 elif shared.current_user[0]['package'] == 'standard' and paket == 'premium':
-                    print('Cant access this session due to not having premium package.\n'
-                          'Try another session.\n')
+                    print('Nemas premium koji treba za trening, idi kupi premium.\n'
+                          'Probaj neki drugi termin.\n')
                 elif shared.current_user[0]['package'] == 'standard' and paket == 'standard':
-                    print('Bravo sirotinjj imas stadnard.\n')
+                    print('Imas standard, bravo.\n')
                     odabir_mesta(cursor, sifra)
                 else:
-                    print('No session with that code.\n'
-                          'Try again.\n')
+                    print('Pokusaj ponovo.\n')
 
         elif odabir == '2':
             pretragatermina(cursor)
@@ -80,8 +95,8 @@ def rezervacija_mesta(cursor):
         elif odabir == 'x':
             return
         else:
-            print('Invalid choice.\n'
-                  'Try again.\n')
+            print('Nevazeci izbor.\n'
+                  'Ponovo pokusaj.\n')
 
 def odabir_mesta(cursor, sifra):
     cursor.execute('''SELECT sale.broj_redova, sale.oznaka_mesta 
@@ -111,12 +126,12 @@ def odabir_mesta(cursor, sifra):
     table = tabulate(table_rows, tablefmt="fancy_grid", stralign="center")
     print(table)
     while True:
-        biracko_mesto = input('Enter free place in hall: ')
+        biracko_mesto = input('Unesi slobodno mest u fromatu BROJslovo "1A", "3B", "6J": ')
         if biracko_mesto in sva_mesta_slobodna:
             break
         else:
-            print('Plese choose one of free places.\n'
-                  'Try again.\n')
+            print('Izaberi slobodno mesto.\n'
+                  'Pokusaj ponovo.\n')
 
     cursor.execute('SELECT sifra_rezervacije FROM rezervacije')
     sifre_rezervacija = [sifra_rezervacije[0] for sifra_rezervacije in cursor.fetchall()]
@@ -140,6 +155,9 @@ def pregled_rezervacija_korisnika(cursor):
                         ON trening.sifra_treninga = termin.sifra_treninga
                         WHERE rezervacije.korisnicko_ime = ?''', (username,))
     data = cursor.fetchall()
+    if data == []:
+        print("idi prvo pa rezervisi nesto")
+        return
     headers = [desc[0] for desc in cursor.description]
     table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
     print(table)
@@ -152,16 +170,20 @@ def brisanje_rezervacija_korisnika(cursor):
         print('\nPoništavanje rezervacije mesta\n')
         cursor.execute('SELECT sifra_rezervacije FROM rezervacije WHERE korisnicko_ime = ?', (username,))
         sifre = [sifra[0] for sifra in cursor.fetchall()]
-        print(sifre)
-        odabir = input('Unesi sifru rezervacije ili "x" za povratak na meni: ').strip()
-        if odabir.lower() == 'x':
-            return
-        elif int(odabir) in sifre:
-            cursor.execute('DELETE FROM rezervacije WHERE sifra_rezervacije = ?', (odabir,))
-            print('Rezervacija obrisana.')
-        else:
-            print('Unesi ispravnu sifru rezervacije.\n'
-                  'Unesi ponovo.\n')
+        
+        if len(sifre) > 0:
+            odabir = input('Unesi sifru rezervacije ili "x" za povratak na meni: ').strip()
+            if odabir.lower() == 'x':
+                return
+            elif int(odabir) in sifre:
+                cursor.execute('DELETE FROM rezervacije WHERE sifra_rezervacije = ?', (odabir,))
+                print('Rezervacija obrisana.')
+            else:
+                print('Unesi ispravnu sifru rezervacije.\n'
+                    'Unesi ponovo.\n')
+        else: 
+            print("Nemas sta da obrises")
+            break
 
 def rezervacija_mesta_instruktori(cursor):
     print('\nRezervacija mesta\n')
@@ -184,78 +206,55 @@ def rezervacija_mesta_instruktori(cursor):
         print('\nNema posla za sada.\n')
         return
 
+
     while True:
-        print('You can reserve directly by entering training session code or by searching training sessions.\n'
-                'If you want to enter code directly enter 1.\n'
-                'If you want to search for session enter 2.\n'
-                'To get back to your menu enter "x".\n')
-        odabir = input('Enter your choice: ')
-        if odabir == '1':
-            while True:
-                print('You are currently reserving session directly by entering session code.')
-                while True:
-                    sifra = input('Enter session code or enter "x" to return to menu: ')
-                    if sifra in sifre_termina:
-                        break
-                    elif sifra.lower() == 'x':
-                        return
-                    else:
-                        print('Choose one of existing session codes.\n')
-                while True:
-                    username = input('Enter username of your candidate or enter "x" to return to menu: ')
-                    cursor.execute('SELECT status_korisnika, paket FROM korisnici WHERE korisnicko_ime = ?', (username,))
-                    data = cursor.fetchone()
+        print("Upravo rezervises: ")
+        
+        while True:
+            sifra = input('Enter session code or enter "x" to return to menu: ')
+            if sifra in sifre_termina:
+                break
+            elif sifra.lower() == 'x':
+                return
+            else:
+                print('Choose one of existing session codes.\n')
+        while True:
+            username = input('Enter username of your candidate or enter "x" to return to menu: ')
+            cursor.execute('SELECT status_korisnika, paket FROM korisnici WHERE korisnicko_ime = ?', (username,))
+            data = cursor.fetchone()
 
-                    if username.lower() == "x":
-                        return
-                    elif data:
-                        status, paket = data
-                        break
-                    else:
-                        print('Izaberi jednog od postojecih korisnika.\n')
+            if username.lower() == "x":
+                return
+            elif data:
+                status, paket = data
+                break
+            else:
+                print('Izaberi jednog od postojecih korisnika.\n')
 
-                cursor.execute('''SELECT programi_treninga.paket
-                                    FROM trening
-                                    JOIN programi_treninga
-                                    ON trening.naziv_programa = programi_treninga.naziv_programa
-                                    JOIN termin
-                                    ON trening.sifra_treninga = termin.sifra_treninga
-                                    WHERE termin.sifra_termina = ?''', (sifra,))
+        cursor.execute('''SELECT programi_treninga.paket
+                            FROM trening
+                            JOIN programi_treninga
+                            ON trening.naziv_programa = programi_treninga.naziv_programa
+                            JOIN termin
+                            ON trening.sifra_treninga = termin.sifra_treninga
+                            WHERE termin.sifra_termina = ?''', (sifra,))
 
-                paket_potreban = cursor.fetchone()[0]
+        paket_potreban = cursor.fetchone()[0]
 
-                if status == 'neaktivan':
-                    print(f'\n{username} korisnik nije aktivan.\n')
-                elif paket == 'premium':
-                    odabir_mesta_instruktor(cursor, sifra, username)
-                elif paket == 'standard' and paket_potreban == 'premium':
-                    print('Korisniku treba premium, a on ima samo standard.\n')
-                elif paket == 'standard' and paket_potreban == 'standard':
-                    odabir_mesta_instruktor(cursor, sifra, username)
-                else:
-                    print('Nesto nevalja tu.\n'
-                          'Pokusaj ponovo.\n')
-
-
-        elif odabir == '2':
-            pretragatermina(cursor)
-            #
-            #
-            #
-            #
-            #
-            # NAsTAVITI!!!!!!!!!!!!
-            #
-            #
-            #
-            #
-            #
-
-        elif odabir == 'x':
-            return
+        if status == 'neaktivan':
+            print(f'\n{username} korisnik nije aktivan.\n')
+        elif paket == 'premium':
+            odabir_mesta_instruktor(cursor, sifra, username)
+        elif paket == 'standard' and paket_potreban == 'premium':
+            print('Korisniku treba premium, a on ima samo standard.\n')
+        elif paket == 'standard' and paket_potreban == 'standard':
+            odabir_mesta_instruktor(cursor, sifra, username)
         else:
-            print('Invalid choice.\n'
-                  'Try again.\n')
+            print('Nesto nevalja tu.\n'
+                    'Pokusaj ponovo.\n')
+
+
+        
 
 def odabir_mesta_instruktor(cursor, sifra, username):
     while True:
@@ -288,11 +287,10 @@ def odabir_mesta_instruktor(cursor, sifra, username):
 
         while True:
             biracko_mesto = input('Unesi mesto koje zelis da rezervises: ')
-            if biracko_mesto in slobodna_mesta:
-                break
+            if biracko_mesto not in slobodna_mesta:
+                print("Izaberi slobodno mesto")
             else:
-                print('Izaberi slobodno mesto.\n'
-                        'Unesi ponovo.\n')
+                break
 
         cursor.execute('SELECT sifra_rezervacije FROM rezervacije')
         sifre_rezervacija = [sifra_rezervacije[0] for sifra_rezervacije in cursor.fetchall()]
@@ -304,6 +302,7 @@ def odabir_mesta_instruktor(cursor, sifra, username):
         datum = date.today()
 
         cursor.execute('INSERT INTO rezervacije VALUES (?, ?, ?, ?, ?)', (rdm_sifra, username, sifra, biracko_mesto, datum))
+        break
 
 def query_za_pregled_rez_instruktor(cursor):
     ime_prezime = f'{shared.current_user[0]["name"]} {shared.current_user[0]["surname"]}'
@@ -381,6 +380,7 @@ def pretraga_rez_mesta(cursor):
             word = input('Unesi prezime korisnika: ')
             nastavak = 'AND korisnici.prezime = ?'
             pretraga_rez_mesta_nastavak(cursor, nastavak, word)
+            
 
         elif odabir == '4':
             word = input('Unesi datum u formatu (yyyy-mm-dd): ')

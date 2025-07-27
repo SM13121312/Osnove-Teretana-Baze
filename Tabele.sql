@@ -66,12 +66,12 @@ CREATE TABLE trening (
 
 INSERT INTO trening (sifra_treninga, sifra_sale, vreme_pocetka, vreme_kraja, dan, naziv_programa)
 VALUES
-  (1111, 1, '09:00', '10:30', 'ponedeljak|utorak|sreda', 'Kardio'),
-  (2222, 1, '10:30', '11:30', 'utorak|sreda', 'Kardio'),
-  (3333, 2, '12:30', '14:00', 'sreda', 'Leg-day'),
-  (4444, 2, '14:20', '15:00', 'cetvrtak|petak', 'Leg-day'),
-  (5555, 3, '15:30', '16:30', 'petak', 'Push-pull'),
-  (6666, 3, '16:00', '17:30', 'subota', 'Push-pull');
+  (1111, 1, '09:00:00', '10:30:00', 'ponedeljak|utorak|sreda', 'Kardio'),
+  (2222, 1, '10:30:00', '11:30:00', 'utorak|sreda', 'Kardio'),
+  (3333, 2, '12:30:00', '14:00:00', 'sreda', 'Leg-day'),
+  (4444, 2, '14:20:00', '15:00:00', 'cetvrtak|petak', 'Leg-day'),
+  (5555, 3, '15:30:00', '16:30:00', 'petak', 'Push-pull'),
+  (6666, 3, '16:00:00', '17:30:00', 'subota', 'Push-pull');
 
 
 DROP TABLE IF EXISTS termin;
@@ -79,6 +79,7 @@ CREATE TABLE termin (
   sifra_termina varchar(10) NOT NULL,
   datum date DEFAULT NULL,
   sifra_treninga int DEFAULT NULL,
+  dan_termina VARCHAR(15),
   PRIMARY KEY (sifra_termina),
   FOREIGN KEY (sifra_treninga) REFERENCES trening (sifra_treninga) ON DELETE SET NULL
 );

@@ -1,6 +1,7 @@
 from tabulate import tabulate
 import re
 import sys
+from datetime import date, datetime
 
 
 def pregled_programa(cursor):
@@ -129,15 +130,16 @@ def pretragatermina(cursor):
                JOIN termin ON trening.sifra_treninga = termin.sifra_treninga '''
 
     while True:
-        odabir = input('Unesite po cemu pretrazujes ili "x" za povratak na meni: ')
+        odabir = input('Unesite po cemu pretrazujes ili "x" ako ste pronasli termin ili hocete da izadjete: ')
+        danasnji_datum = date.today()
         if odabir == '1':
             while True:
                 word = input('Unesite naziv programa ili "x" za povratak na pretragu: ')
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE programi_treninga.naziv_programa = ?'
-                    prikaz_pretrage_termina2(cursor, query1, query2, word)
+                    query2 = 'WHERE programi_treninga.naziv_programa = ? AND termin.datum >= ?'
+                    prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum)
 
 
         elif odabir == '2':
@@ -146,8 +148,8 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE trening.sifra_sale = ?'
-                    prikaz_pretrage_termina2(cursor, query1, query2, word)
+                    query2 = 'WHERE trening.sifra_sale = ? AND termin.datum >= ?'
+                    prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum)
 
         elif odabir == '3':
             while True:
@@ -155,8 +157,8 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE programi_treninga.paket = ?'
-                    prikaz_pretrage_termina2(cursor, query1, query2, word)
+                    query2 = 'WHERE programi_treninga.paket = ? AND termin.datum >= ?'
+                    prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum)
 
         elif odabir == '4':
             while True:
@@ -169,8 +171,8 @@ def pretragatermina(cursor):
                 if month.lower() == 'x' or day.lower() == 'x':
                     break
                 elif re.match(date_pattern, word):
-                    query2 = 'WHERE termin.datum = ?'
-                    prikaz_pretrage_termina2(cursor, query1, query2, word)
+                    query2 = 'WHERE termin.datum = ? AND termin.datum >= ?'
+                    prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum)
                 else:
                     print('Unesite ispravan datum.')
 
@@ -181,8 +183,8 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE trening.vreme_pocetka = ?'
-                    prikaz_pretrage_termina2(cursor, query1, query2, word)
+                    query2 = 'WHERE trening.vreme_pocetka = ? AND termin.datum >= ?'
+                    prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum)
 
         elif odabir == '6':
             while True:
@@ -190,8 +192,8 @@ def pretragatermina(cursor):
                 if word.lower() == 'x':
                     break
                 else:
-                    query2 = 'WHERE trening.vreme_kraja = ?'
-                    prikaz_pretrage_termina2(cursor, query1, query2, word)
+                    query2 = 'WHERE trening.vreme_kraja = ? AND termin.datum >= ?'
+                    prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum)
 
         elif odabir.lower() == 'x':
             return
@@ -199,13 +201,13 @@ def pretragatermina(cursor):
         else:
             print('NEVAZECI IZBOR\n')
 
-def prikaz_pretrage_termina2(cursor, query1, query2, word):
+def prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum):
     BRIGHT_GREEN_BORDER = "\033[38;5;82m"  # Brighter green for borders
     BLACK_TEXT = "\033[30m"  # Black text for table content
     DARK_YELLOW_BG = "\033[48;5;196m"  # Dark yellow background
     RESET = "\033[0m"  # Reset to default colors
 
-    cursor.execute(query1 + query2, (word,))
+    cursor.execute(query1 + query2, (word, danasnji_datum))
     data = cursor.fetchall()
     if data:
         headers = [desc[0] for desc in cursor.description]
@@ -273,7 +275,7 @@ def unos_programa(cursor):
         else:
             print('Trajanje mora biti u minutima.')
 
-    print('Choose name of instructor: ', end='')
+    
     cursor.execute('SELECT ime, prezime FROM korisnici WHERE uloga = "instruktor"')
     imena = cursor.fetchall()
     while True:
@@ -315,7 +317,7 @@ def izmena_programa_column(cursor, naziv_programa):
     data = cursor.fetchone()
 
     headers = [desc[0] for desc in cursor.description]
-    table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
+    table = tabulate([data], headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
     print(table)
     print('Za svaku informaciju ili ukucaj novu ili pritisni ENTER da sadrzis staru informaciju.')
     
@@ -414,7 +416,13 @@ def unos_treninga(cursor):
         cursor.execute('SELECT sifra_treninga FROM trening')
         sifrice = [sif[0] for sif in cursor.fetchall()]
         while True:
-            sifra_treninga = input('Unesi sifru: ')
+            sifra_treninga = input('Unesi sifru ili "x" za vracanje na meni: ').strip()
+            if sifra_treninga.lower() == "x":
+                return
+            if sifra_treninga.isalpha():
+                print("sifra treninga je broj")
+                continue
+            
             if eval(sifra_treninga) in sifrice:
                 print('Ajde molim te uzmi neku drugu.')
             elif sifra_treninga.strip() == '':
@@ -500,7 +508,7 @@ def izmena_treninga_column(cursor, sifra):
     data = cursor.fetchone()
 
     headers = [desc[0] for desc in cursor.description]
-    table = tabulate(data, headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
+    table = tabulate([data], headers, tablefmt="fancy_grid", colalign=['center'] * len(headers))
     print(table)
     print('Unesi nove informacije ili pritisni ENTER da predjes na sledecu informaciju i zadrzis staru.')
 

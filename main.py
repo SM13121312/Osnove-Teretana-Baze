@@ -58,7 +58,7 @@ def meniprvi():
         elif odabir == '3':
             kruziraj_kao_gest()
         elif odabir.lower() == 'x':
-            print('CAOOOOOOO')
+            print('CAO')
             cursor.close()
             connection.close()
             sys.exit()
@@ -109,7 +109,6 @@ def valusername():
     cursor.execute('SELECT korisnicko_ime FROM korisnici')
     imenarazna = [imenica[0] for imenica in cursor.fetchall()]
     pattern = r'^[a-zA-Z0-9]+$'
-    print(imenarazna)
     while True:
         username = input('Izaberi username, username sadrzi samo slova (A-Z) i brojeve: ')
         username = username.lower()
@@ -180,17 +179,17 @@ def unosenje_termina():
                 datum_za_loop += timedelta(days=1)
 
         for datic in svi_datumi:
-            datic_str = datic.strftime("%Y-%m-%d")
+            danko_bananko = dani_u_listi[datic.weekday()]
+            datic = datic.strftime("%Y-%m-%d")
+                    
+            cursor.execute(
+                'SELECT COUNT(*) FROM termin WHERE sifra_treninga = ? AND datum = ?',
+                (sifra_treninga, datic)
+            )
+            already_exists = cursor.fetchone()[0] > 0
 
-            # cursor.execute(
-            #     'SELECT COUNT(*) FROM termin WHERE sifra_treninga = ? AND datum = ?',
-            #     (sifra_treninga, datic_str)
-            # )
-            # already_exists = cursor.fetchone()[0] > 0
-
-            # if already_exists:
-            #     print("sekta")
-            #     continue  
+            if already_exists:
+                continue
 
             while True:
                 cursor.execute('SELECT sifra_termina FROM termin')
@@ -202,10 +201,12 @@ def unosenje_termina():
                     break
 
             try:
-                cursor.execute('INSERT INTO termin VALUES (?, ?, ?)', (sifra_termina, datic_str, sifra_treninga))
-                print("uzad")
+                cursor.execute('INSERT INTO termin VALUES (?, ?, ?, ?)', (sifra_termina, datic, sifra_treninga, danko_bananko))
             except sqlite3.Error as e:
                 print("SQL Error:", e)
+
+    print('uspeo si')        
+    connection.commit()
   
 
 def izvestaji():
@@ -263,7 +264,7 @@ def log_in():
     cursor.execute('SELECT COUNT(korisnicko_ime) FROM korisnici WHERE korisnicko_ime = ?', (username,))
     brojac = cursor.fetchone()
     if brojac[0] > 0:
-        password = input('ENTER YOUR PASSWORD: ')
+        password = input('Unesi lozinku: ')
         cursor.execute('SELECT lozinka FROM korisnici WHERE korisnicko_ime = ?', (username,))
         sifra = cursor.fetchone()
         if password == sifra[0]:
@@ -304,11 +305,11 @@ def meni_admin():
               '4) Unos, izmena i brisanje programa treninga\n'
               '5) Unos, izmena i brisanje treninga\n'
               '6) Registracija novih intruktora i admina\n'
-              '7) Generisanje novih termina treninga\n'
-              '8) Razni izvestaji\n'
+              
+              '7) Razni izvestaji\n'
               'xxx) Odjava\n'
               'x) Izlazak iz aplikacije\n')
-        odabir = input('Your choice is: ')
+        odabir = input('Tvoj odabir: ')
         if odabir == '1':
             pregled_programa(cursor)
         elif odabir == '2':
@@ -324,10 +325,8 @@ def meni_admin():
         elif odabir == '6':
             reg_instruktora(cursor)
             connection.commit()
+        
         elif odabir == '7':
-            unosenje_termina()
-            connection.commit()
-        elif odabir == '8':
             izvestaji()
         elif odabir == 'xxx':
             log_out()
@@ -351,9 +350,11 @@ def meni_instruktor():
               '7) Poništavanje rezervisanih mesta\n'
               '8) Pretraga rezervisanih mesta\n'
               '9) Aktivacija statusa člana\n'
+              '10) Aktivacija premiuma člana\n'
+              '11) Izmena rezervacije mesta\n'
               'xxx) Odjava\n'
               'x) Izlazak iz aplikacije\n')
-        odabir = input('Your choice is: ')
+        odabir = input('Tvoj izbor je: ')
         if odabir == '1':
             pregled_programa(cursor)
         elif odabir == '2':
@@ -376,6 +377,12 @@ def meni_instruktor():
         elif odabir == '9':
             aktivacija_statusa(cursor)
             connection.commit()
+        elif odabir == '10':
+            aktivacija_premiuma(cursor)
+            connection.commit()
+        elif odabir == '11':
+            print("Izgleda da nisam uradio izmenu rezervacije")
+            pass
         elif odabir == 'xxx':
             log_out()
         elif odabir.lower() == 'x':
@@ -425,14 +432,14 @@ def meni_korisnik():
 
 def kruziraj_kao_gest():
     while True:
-        print('\nCurrently you are here as a guest.')
+        print('\nTrenutni si tu kao gost.')
         print('1) PRIJAVA\n'
               '2) REGISTRACIJA\n'
               '3) Pregled programa treninga\n'
               '4) Pretraga programa treninga\n'
               '5) Pretraga termina treninga\n'
               'x) Izlazak iz aplikacije\n')
-        odabir = input('Your choice is: ')
+        odabir = input('Tvoj izbor je:: ')
         if odabir == '1':
             log_in()
         elif odabir == '2':
@@ -461,7 +468,6 @@ def kruziraj_kao_gest():
 
 if __name__ == '__main__':
     # restart_baze()
-    
     unosenje_termina()
     meniprvi()
 
