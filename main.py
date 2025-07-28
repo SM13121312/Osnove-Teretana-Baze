@@ -243,8 +243,8 @@ def izvestaji():
         
 
 def mesecna_nagrada():
-    danasnji_datum = date.today()
-    za_mesec_datum = date.today() - timedelta(days=30)
+    danasnji_datum = date.today().isoformat()
+    za_mesec_datum = (date.today() - timedelta(days=30)).isoformat()
     cursor.execute('''UPDATE korisnici
                     SET status_korisnika = 'aktivan', paket = 'premium', datum_aktivacije = ?, datum_isteka = ?
                     WHERE status_korisnika = 'neaktivan' AND korisnicko_ime IN (
@@ -469,8 +469,8 @@ def kruziraj_kao_gest():
 
 
 if __name__ == '__main__':
-    # restart_baze()
+    restart_baze()
     # unosenje_termina()
-    mesecna_nagrada()
+    # mesecna_nagrada()
     meniprvi()
 

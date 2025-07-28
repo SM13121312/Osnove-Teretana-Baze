@@ -18,6 +18,17 @@ INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES ('adm
 INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES('boza', 'boza1234', 'Boza', 'Paunovic', 'instruktor');
 INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES('moma', 'moma1234', 'Moma', 'Paunovic', 'instruktor');
 INSERT INTO korisnici(korisnicko_ime, lozinka, ime, prezime, uloga) VALUES('ljubomir', 'ljubomir1234', 'Ljuba', 'Misic', 'instruktor');
+INSERT INTO korisnici 
+(korisnicko_ime, lozinka, ime, prezime, uloga, status_korisnika, paket, datum, datum_aktivacije, datum_isteka) 
+VALUES 
+('marko123', 'lozinka123', 'Marko', 'Jovanović', 'korisnik', 'aktivan', 'standard', '2025-07-28', '2025-07-28', '2025-08-28'),
+
+('ana456', 'sifra456', 'Ana', 'Petrović', 'korisnik', 'aktivan', 'standard', '2025-07-28', '2025-07-28', '2025-08-28'),
+
+('nikola789', 'pass789', 'Nikola', 'Simić', 'korisnik', 'aktivan', 'premium', '2025-07-28', '2025-07-28', '2025-08-28'),
+
+('milica321', 'tajna321', 'Milica', 'Ristić', 'korisnik', 'aktivan', 'premium', '2025-07-28', '2025-07-28', '2025-08-28');
+
 
 
 DROP TABLE IF EXISTS sale;
