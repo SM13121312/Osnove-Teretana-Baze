@@ -243,6 +243,8 @@ def izvestaji():
         
 
 def mesecna_nagrada():
+    danasnji_datum = date.today()
+    za_mesec_datum = date.today() - timedelta(days=30)
     cursor.execute('''UPDATE korisnici
                     SET status_korisnika = 'aktivan', paket = 'premium', datum_aktivacije = ?, datum_isteka = ?
                     WHERE status_korisnika = 'neaktivan' AND korisnicko_ime IN (
