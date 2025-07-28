@@ -468,6 +468,7 @@ def kruziraj_kao_gest():
 
 if __name__ == '__main__':
     # restart_baze()
-    unosenje_termina()
+    # unosenje_termina()
+    mesecna_nagrada()
     meniprvi()
 

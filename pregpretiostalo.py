@@ -171,7 +171,7 @@ def pretragatermina(cursor):
                 if month.lower() == 'x' or day.lower() == 'x':
                     break
                 elif re.match(date_pattern, word):
-                    query2 = 'WHERE termin.datum = ? AND termin.datum >= ?'
+                    query2 = 'WHERE termin.datum = ? AND termin.datum > ?'
                     prikaz_pretrage_termina2(cursor, query1, query2, word, danasnji_datum)
                 else:
                     print('Unesite ispravan datum.')
@@ -179,7 +179,7 @@ def pretragatermina(cursor):
 
         elif odabir == '5':
             while True:
-                word = input('Unesite vreme pocetka "hh:mm" ili "x" za povratak na pretragu: ')
+                word = input('Unesite vreme pocetka "hh:mm:ss" ili "x" za povratak na pretragu: ')
                 if word.lower() == 'x':
                     break
                 else:
@@ -188,7 +188,7 @@ def pretragatermina(cursor):
 
         elif odabir == '6':
             while True:
-                word = input('Unesite vreme kraja "hh:mm" ili "x" za povratak na pretragu: ')
+                word = input('Unesite vreme kraja "hh:mm:ss" ili "x" za povratak na pretragu: ')
                 if word.lower() == 'x':
                     break
                 else:
@@ -444,7 +444,7 @@ def unos_treninga(cursor):
 
         pattern = r'^([01]\d|2[0-3]):[0-5]\d$'
         while True:
-            start_time = input('Unesi vreme pocetka "hh:mm": ')
+            start_time = input('Unesi vreme pocetka "hh:mm:ss": ')
             if start_time.strip() == '':
                 print('Unesi bar nesto.')
             elif re.match(pattern, start_time):
@@ -453,7 +453,7 @@ def unos_treninga(cursor):
                 print('Unesi u navedenom formatu.')
 
         while True:
-            end_time = input('Unesi vreme kraja "hh:mm": ')
+            end_time = input('Unesi vreme kraja "hh:mm:ss": ')
             if end_time.strip() == '':
                 print('Unesi bar nesto.')
             elif re.match(pattern, end_time):
@@ -539,7 +539,7 @@ def izmena_treninga_column(cursor, sifra):
 
     pattern = r'^([01]\d|2[0-3]):[0-5]\d$'
     while True:
-        vreme_pocetka = input('Unesi vreme pocetka ("hh:mm"): ')
+        vreme_pocetka = input('Unesi vreme pocetka ("hh:mm:ss"): ')
         if vreme_pocetka == '':
             vreme_pocetka = data[2]
             break
@@ -549,7 +549,7 @@ def izmena_treninga_column(cursor, sifra):
             print('Unesi ispravan format.')
 
     while True:
-        vreme_kraja = input('Unesi vreme kraja ("hh:mm"): ')
+        vreme_kraja = input('Unesi vreme kraja ("hh:mm:ss"): ')
         if vreme_kraja == '':
             vreme_kraja = data[3]
             break

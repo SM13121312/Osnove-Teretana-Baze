@@ -2,6 +2,7 @@ from multiprocessing import connection
 from tabulate import tabulate
 from datetime import date, datetime
 import random
+from main import meni_instruktor
 import shared
 from pregpretiostalo import pretragatermina
 
@@ -12,14 +13,12 @@ def pregled_termina(cursor):
     
     danasnji_datum = date.today()
 
-    trenutno_vreme = datetime.now().strftime("%H:%M")
-
     cursor.execute('''
         SELECT * 
         FROM termin
         JOIN trening ON termin.sifra_treninga = trening.sifra_treninga
-        WHERE termin.datum >= ? AND trening.vreme_pocetka > ?
-    ''', (danasnji_datum, trenutno_vreme))
+        WHERE termin.datum >= ?
+    ''', (danasnji_datum,))
     data = cursor.fetchall()
     
     if not data:
@@ -147,13 +146,14 @@ def odabir_mesta(cursor, sifra):
 def pregled_rezervacija_korisnika(cursor):
     print('Pregled rezervisanih mesta')
     username = shared.current_user[0]['username']
+    danasnji_datum = date.today()
     cursor.execute('''SELECT rezervacije.sifra_rezervacije, rezervacije.sifra_termina, termin.datum, trening.naziv_programa, trening.vreme_pocetka, trening.vreme_kraja 
                         FROM rezervacije
                         JOIN termin
                         ON rezervacije.sifra_termina = termin.sifra_termina
                         JOIN trening
                         ON trening.sifra_treninga = termin.sifra_treninga
-                        WHERE rezervacije.korisnicko_ime = ?''', (username,))
+                        WHERE rezervacije.korisnicko_ime = ? AND rezervacije.datum >= ?''', (username, danasnji_datum))
     data = cursor.fetchall()
     if data == []:
         print("idi prvo pa rezervisi nesto")
@@ -166,6 +166,8 @@ def pregled_rezervacija_korisnika(cursor):
 def brisanje_rezervacija_korisnika(cursor):
     username = shared.current_user[0]['username']
     while True:
+        danasnji_datum = date.today()
+        
         pregled_rezervacija_korisnika(cursor)
         print('\nPoništavanje rezervacije mesta\n')
         cursor.execute('SELECT sifra_rezervacije FROM rezervacije WHERE korisnicko_ime = ?', (username,))
@@ -175,6 +177,8 @@ def brisanje_rezervacija_korisnika(cursor):
             odabir = input('Unesi sifru rezervacije ili "x" za povratak na meni: ').strip()
             if odabir.lower() == 'x':
                 return
+            elif odabir.isalpha():
+                print("mora biti broj")
             elif int(odabir) in sifre:
                 cursor.execute('DELETE FROM rezervacije WHERE sifra_rezervacije = ?', (odabir,))
                 print('Rezervacija obrisana.')
@@ -187,6 +191,7 @@ def brisanje_rezervacija_korisnika(cursor):
 
 def rezervacija_mesta_instruktori(cursor):
     print('\nRezervacija mesta\n')
+    danasnji_datum = date.today();
     ime_prezime = f'{shared.current_user[0]["name"]} {shared.current_user[0]["surname"]}'
     cursor.execute('''SELECT termin.sifra_termina, programi_treninga.naziv_programa, vrsta_programa, sifra_sale, datum, vreme_pocetka, vreme_kraja, paket
                             FROM termin
@@ -194,7 +199,7 @@ def rezervacija_mesta_instruktori(cursor):
                             ON trening.sifra_treninga = termin.sifra_treninga
                             JOIN programi_treninga
                             ON trening.naziv_programa = programi_treninga.naziv_programa
-                            WHERE programi_treninga.instruktor = ?''', (ime_prezime,))
+                            WHERE programi_treninga.instruktor = ? AND termin.datum >= ?''', (ime_prezime, danasnji_datum))
     data = cursor.fetchall()
     sifre_termina = [informacija[0] for informacija in data]
 
@@ -211,15 +216,15 @@ def rezervacija_mesta_instruktori(cursor):
         print("Upravo rezervises: ")
         
         while True:
-            sifra = input('Enter session code or enter "x" to return to menu: ')
+            sifra = input('Unesi sifru termina ili "x" za vracanje na meni: ')
             if sifra in sifre_termina:
                 break
             elif sifra.lower() == 'x':
                 return
             else:
-                print('Choose one of existing session codes.\n')
+                print('Izaberi neki od postojecih termina\n')
         while True:
-            username = input('Enter username of your candidate or enter "x" to return to menu: ')
+            username = input('Unesi username korisnika ili "x" za vracanje na meni: ')
             cursor.execute('SELECT status_korisnika, paket FROM korisnici WHERE korisnicko_ime = ?', (username,))
             data = cursor.fetchone()
 
@@ -245,10 +250,12 @@ def rezervacija_mesta_instruktori(cursor):
             print(f'\n{username} korisnik nije aktivan.\n')
         elif paket == 'premium':
             odabir_mesta_instruktor(cursor, sifra, username)
+            return
         elif paket == 'standard' and paket_potreban == 'premium':
             print('Korisniku treba premium, a on ima samo standard.\n')
         elif paket == 'standard' and paket_potreban == 'standard':
             odabir_mesta_instruktor(cursor, sifra, username)
+            return
         else:
             print('Nesto nevalja tu.\n'
                     'Pokusaj ponovo.\n')
@@ -302,10 +309,11 @@ def odabir_mesta_instruktor(cursor, sifra, username):
         datum = date.today()
 
         cursor.execute('INSERT INTO rezervacije VALUES (?, ?, ?, ?, ?)', (rdm_sifra, username, sifra, biracko_mesto, datum))
-        break
+        return
 
 def query_za_pregled_rez_instruktor(cursor):
     ime_prezime = f'{shared.current_user[0]["name"]} {shared.current_user[0]["surname"]}'
+    danasnji_datum = date.today();
     cursor.execute('''SELECT rezervacije.sifra_rezervacije, rezervacije.sifra_termina, termin.datum, trening.naziv_programa, trening.vreme_pocetka, trening.vreme_kraja 
                         FROM rezervacije
                         JOIN termin
@@ -314,7 +322,7 @@ def query_za_pregled_rez_instruktor(cursor):
                         ON trening.sifra_treninga = termin.sifra_treninga
                         JOIN programi_treninga
                         ON programi_treninga.naziv_programa = trening.naziv_programa
-                        WHERE programi_treninga.instruktor = ?''', (ime_prezime,))
+                        WHERE programi_treninga.instruktor = ? AND termin.datum >= ?''', (ime_prezime, danasnji_datum))
     return cursor.fetchall(), cursor.description
 
 def pregled_rezervacija_instruktor(cursor):
@@ -388,12 +396,12 @@ def pretraga_rez_mesta(cursor):
             pretraga_rez_mesta_nastavak(cursor, nastavak, word)
 
         elif odabir == '5':
-            word = input('Unesi pocetak treninga (hh:mm): ')
+            word = input('Unesi pocetak treninga (hh:mm:ss): ')
             nastavak = 'AND trening.vreme_pocetka = ?'
             pretraga_rez_mesta_nastavak(cursor, nastavak, word)
 
         elif odabir == '6':
-            word = input('Unesi kraj treninga (hh:mm): ')
+            word = input('Unesi kraj treninga (hh:mm:ss): ')
             nastavak = 'AND trening.vreme_kraja = ?'
             pretraga_rez_mesta_nastavak(cursor, nastavak, word)
 
@@ -404,6 +412,7 @@ def pretraga_rez_mesta(cursor):
                   'Unesi ponovo.\n')
 
 def pretraga_rez_mesta_nastavak(cursor, nastavak, word):
+    danasnji_datum = date.today()
     ime_prezime = f'{shared.current_user[0]["name"]} {shared.current_user[0]["surname"]}'
     query = '''SELECT rezervacije.sifra_rezervacije, termin.sifra_termina, termin.datum, trening.naziv_programa, trening.vreme_pocetka, trening.vreme_kraja, rezervacije.datum AS "datum rezervacije"
                     FROM rezervacije
@@ -415,9 +424,9 @@ def pretraga_rez_mesta_nastavak(cursor, nastavak, word):
                     ON trening.sifra_treninga = termin.sifra_treninga
                     JOIN programi_treninga
                     ON trening.naziv_programa = programi_treninga.naziv_programa 
-                    WHERE programi_treninga.instruktor = ? '''
+                    WHERE programi_treninga.instruktor = ? AND termin.datum >= ?'''
 
-    cursor.execute(query + nastavak, (ime_prezime,word))
+    cursor.execute(query + nastavak, (ime_prezime, danasnji_datum, word))
     data = cursor.fetchall()
     if data:
         headers = [desc[0] for desc in cursor.description]
